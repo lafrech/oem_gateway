@@ -190,7 +190,6 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
                 # Add data to send buffers
                 values.insert(0,node)
 
-                print values
                 return values
 
     def set(self, **kwargs):

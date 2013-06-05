@@ -9,11 +9,9 @@
 
 """
 
-import serial
-import urllib2, httplib
+import urllib2
 import time
 import logging, logging.handlers
-import re
 import signal
 import csv
 import argparse
@@ -21,13 +19,13 @@ import argparse
 from oemgatewaybuffer import OemGatewayEmoncmsBuffer
 from oemgatewaylistener import OemGatewayRFM2PiListener
 
-"""class RFM2PiGateway
+"""class OemGateway
 
 Monitors the serial port for data from RFM2Pi and sends data to local or remote 
 emoncms servers through OemGatewayEmoncmsBuffer instances.
 
 """
-class RFM2PiGateway():
+class OemGateway(object):
     
     def __init__(self, logpath=None):
         """Setup an RFM2Pi gateway.
@@ -250,7 +248,7 @@ if __name__ == "__main__":
 
     # Create, run, and close RFM2Pi Gateway instance
     try:
-        gateway = RFM2PiGateway(logfile)
+        gateway = OemGateway(logfile)
     except Exception as e:
         print(e)
     else:    
