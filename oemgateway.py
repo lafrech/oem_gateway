@@ -9,13 +9,13 @@
 
 """
 
-import urllib2
 import time
 import logging, logging.handlers
 import signal
-import csv
 import argparse
+import pprint
 
+from oemgatewayinterface import OemGatewayEmoncmsInterface
 from oemgatewaybuffer import OemGatewayEmoncmsBuffer
 from oemgatewaylistener import OemGatewayRFM2PiListener
 
@@ -52,29 +52,14 @@ class OemGateway(object):
         self.log.addHandler(loghandler)
         self.log.setLevel(logging.DEBUG)
         
-        # Initialize socket listeners
-        self._listeners = {}
-        self._listeners['rfm2pi'] = OemGatewayRFM2PiListener(logger = __name__)
-        for l in self._listeners.itervalues():
-            if (l.open_socket() == False):
-                self.close()
-                raise Exception('COM port opening failed.')
- 
-        # Initialize target server buffer set
-        self._buffers = {}
-       
-        # Initialize status update timestamp
-        self._status_update_timestamp = 0
+        self.log.info("Opening gateway...")
+        
+        # Initialize gateway interface
+        self._interface = OemGatewayEmoncmsInterface(logger=__name__)
 
-        # Get emoncms server buffers and RFM2Pi settings
-        self._settings = None
-        self._update_settings()
-    
-        # If settings can't be obtained, exit
-        while (self._settings is None):
-            self.log.warning("Couldn't get settings. Retrying in 10 sec...")
-            time.sleep(10)
-            self._update_settings()
+        #Initialize buffers and listeners dictionaries
+        self._buffers = {}
+        self._listeners = {}
         
     def run(self):
         """Launch the gateway.
@@ -90,15 +75,9 @@ class OemGateway(object):
         # Until asked to stop
         while not self._exit:
             
-            # Update settings and status every second
-            now = time.time()
-            if (now - self._status_update_timestamp > 1):
-                # Update "running" status to inform emoncms the script is running
-                self._raspberrypi_running()
-                # Update settings
-                self._update_settings()
-                # "Thanks for the status update. You've made it crystal clear."
-                self._status_update_timestamp = now
+            # Run interface and check if settings were modified
+            if self._interface.run():
+                self._update_settings(self._interface.settings)
             
             # For all listeners
             for l in self._listeners.itervalues():
@@ -130,9 +109,12 @@ class OemGateway(object):
         for l in self._listeners.itervalues():
             l.close()
         
-        self.log.info("Exiting...")
+        self.log.info("Exiting gateway...")
         logging.shutdown()
 
+    def return_settings(self):
+        return self._interface.get_settings()
+    
     def _sigint_handler(self, signal, frame):
         """Catch SIGINT (Ctrl+C)."""
         
@@ -140,92 +122,47 @@ class OemGateway(object):
         # gateway should exit at the end of current iteration.
         self._exit = True
 
-    def get_settings(self):
-        """Get settings
-        
-        Returns a dictionnary
-
-        """
-        try:
-            result = urllib2.urlopen("http://localhost/emoncms/raspberrypi/get.json")
-            result = result.readline()
-            # result is of the form
-            # {"userid":"1","sgroup":"210",...,"remoteprotocol":"http:\\/\\/"}
-            result = result[1:-1].split(',')
-            # result is now of the form
-            # ['"userid":"1"',..., '"remoteprotocol":"http:\\/\\/"']
-            settings = {}
-            # For each setting, separate key and value
-            for s in result:
-                # We can't just use split(':') as there can be ":" inside a value 
-                # (eg: "http://")
-                s = csv.reader([s], delimiter=':').next() 
-                settings[s[0]] = s[1].replace("\\","")
-            return settings
-
-        except Exception:
-            import traceback
-            self.log.warning("Couldn't get settings, Exception: " + traceback.format_exc())
-            return
-
-    def _update_settings(self):
+    def _update_settings(self, settings):
         """Check settings and update if needed."""
         
-        # Get settings
-        s_new = self.get_settings()
+        # Gateway
+        #TODO: Add logging level, etc.
 
-        # If s_new is None, no answer to settings request
-        if s_new is None:
-            return
+        # Buffers
+        for name, buf in settings['buffers'].iteritems():
+            # If buffer does not exist, create it
+            if name not in self._buffers:
+                init_settings = dict(buf['init_settings'])
+                init_settings['logger'] = __name__
+                # This gets the class from the 'type' string
+                self.log.info("Creating buffer %s", name)
+                self._buffers[name] = \
+                    globals()[buf['type']](**init_settings)
+            # Set runtime settings
+            self._buffers[name].set(**buf['runtime_settings'])
+        # If existing buffer is not in settings anymore, delete it
+        for name in self._buffers:
+            if name not in settings['buffers']:
+                del(self._buffers[name])
 
-        # RFM2PiListener settings
-        kwargs = {}
-        for param in ['baseid', 'frequency', 'sgroup', 'sendtimeinterval']:
-            kwargs[param] = str(s_new[param])
-        self._listeners['rfm2pi'].set(**kwargs)
-
-        # Server settings
-        if 'local' not in self._buffers:
-            self._buffers['local'] = OemGatewayEmoncmsBuffer(
-                    protocol = 'http://',
-                    domain = 'localhost',
-                    path = '/emoncms', 
-                    apikey = s_new['apikey'], 
-                    period = 0, 
-                    active = True,
-                    logger = __name__)
-        else:
-            self._buffers['local'].update_settings(
-                    apikey = s_new['apikey'])
-        
-        if 'remote' not in self._buffers:
-            self._buffers['remote'] = OemGatewayEmoncmsBuffer(
-                    protocol = s_new['remoteprotocol'], 
-                    domain = s_new['remotedomain'], 
-                    path = s_new['remotepath'],
-                    apikey = s_new['remoteapikey'],
-                    period = 30,
-                    active = bool(s_new['remotesend']),
-                    logger = __name__)
-        else: 
-            self._buffers['remote'].update_settings(
-                    protocol = s_new['remoteprotocol'], 
-                    domain = s_new['remotedomain'],
-                    path = s_new['remotepath'],
-                    apikey = s_new['remoteapikey'],
-                    active = bool(int(s_new['remotesend'])))
-        
-        self._settings = s_new
-    
-    def _raspberrypi_running(self):
-        """Update "script running" status."""
-        
-        try:
-            result = urllib2.urlopen("http://localhost/emoncms/raspberrypi/setrunning.json")
-        except Exception:
-            import traceback
-            self.log.warning("Couldn't update \"running\" status, Exception: " + traceback.format_exc())
-           
+        # Listeners
+        for name, lis in settings['listeners'].iteritems():
+            # If listener does not exist, create it
+            if name not in self._listeners:
+                init_settings = dict(lis['init_settings'])
+                init_settings['logger'] = __name__
+                # This gets the class from the 'type' string
+                self.log.info("Creating listener %s", name)
+                self._listeners[name] = \
+                    globals()[lis['type']](**init_settings)
+                self._listeners[name].open() #TODO: catch opening error
+            # Set runtime settings
+            self._listeners[name].set(**lis['runtime_settings'])
+        # If existing listener is not in settings anymore, delete it
+        for name in self._listeners:
+            if name not in settings['listeners']:
+                self._listeners[name].close()
+                del(self._listeners[name])
 
 if __name__ == "__main__":
 
@@ -252,9 +189,9 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
     else:    
-        # If in "Show settings" mode, print RFM2Pi settings and exit
+        # If in "Show settings" mode, print settings and exit
         if args.show_settings:
-            print(gateway.get_settings())
+            pprint.pprint(gateway.return_settings())
         # Else, run normally
         else:
             gateway.run()

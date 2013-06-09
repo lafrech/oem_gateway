@@ -27,7 +27,7 @@ class OemGatewayListener(object):
         # Initialize logger
         self._logger = logging.getLogger(logger)
         
-    def open_socket(self):
+    def open(self):
         """Open socket to read data from.
         
         Returns True in case of success, False in case of failure.
@@ -100,7 +100,7 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
         # Initialize time updata timestamp
         self._time_update_timestamp = 0
 
-    def open_socket(self):
+    def open(self):
         """Open socket to read data from."""
 
         self._logger.debug("Opening serial port: /dev/ttyAMA0")
@@ -195,7 +195,7 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
     def set(self, **kwargs):
         """Send configuration parameters to the RFM2Pi through COM port.
 
-        **kwargs (dict): settings to be sent. Available settings are
+        **kwargs (dict): settings to be modified. Available settings are
         'baseid', 'frequency', 'sgroup'. Example: 
         {'baseid': '15', 'frequency': '4', 'sgroup': '210'}
         

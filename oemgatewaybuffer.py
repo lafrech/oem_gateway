@@ -21,8 +21,7 @@ destination server.
 """
 class OemGatewayBuffer(object):
 
-    def __init__(self, protocol, domain, path, apikey, period, active, 
-                 logger=None):
+    def __init__(self, logger=None):
         """Create a server data buffer initialized with server settings.
         
         domain (string): domain name (eg: 'domain.tld')
@@ -33,21 +32,22 @@ class OemGatewayBuffer(object):
         logger (string): the logger's name (default None)
         
         """
-        self._protocol = protocol
-        self._domain = domain
-        self._path = path
-        self._apikey = apikey
-        self._period = period
+        
+        self._logger = logging.getLogger(logger)
         self._data_buffer = []
         self._last_send = time.time()
-        self._active = active
-        self._logger = logging.getLogger(logger)
 
-    def update_settings(self, **kwargs):
-        """Update server settings."""
-        for key in ('protocol', 'domain', 'path', 'apikey', 'period', 'active'):
-            if key in kwargs:
-                setattr(self, '_'+key, kwargs[key])
+        self._settings = {}
+        
+    def set(self, **kwargs):
+        """Update settings.
+        
+        **kwargs (dict): settings to be modified.
+        
+        """
+
+        for key, value in kwargs.iteritems():
+            self._settings[key] = value
 
     def add_data(self, data):
         """Append timestamped dataset to buffer.
@@ -56,10 +56,11 @@ class OemGatewayBuffer(object):
 
         """
        
-        if not self._active:
+        if not self._settings['active']:
             return
         
-        self._logger.debug("Server " + self._domain + self._path + 
+        self._logger.debug("Server " + 
+                           self._settings['domain'] + self._settings['path'] + 
                            " -> add data: " + str(data))
         
         # Insert timestamp before data
@@ -76,7 +77,7 @@ class OemGatewayBuffer(object):
 
         """
         now = time.time()
-        if (now - self._last_send > self._period):
+        if (now - self._last_send > self._settings['period']):
             return True
     
     def has_data(self):
@@ -106,7 +107,7 @@ class OemGatewayEmoncmsBuffer(OemGatewayBuffer):
     def send_data(self):
         """Send data to server."""
         
-        if not self._active:
+        if not self._settings['active']:
             return
 
         # Prepare data string with the values in data buffer
@@ -127,13 +128,14 @@ class OemGatewayEmoncmsBuffer(OemGatewayBuffer):
         # Prepare URL string of the form
         # 'http://domain.tld/emoncms/input/bulk.json?apikey=
         # 12345&data=[[-10,10,1806],[-5,10,1806],[0,10,1806]]'
-        url_string = self._protocol + self._domain+self._path + \
-                     "/input/bulk.json?apikey=" + self._apikey + \
-                     "&data=" + data_string
+        url_string = self._settings['protocol'] + self._settings['domain'] + \
+                     self._settings['path'] + "/input/bulk.json?apikey=" + \
+                     self._settings['apikey'] + "&data=" + data_string
         self._logger.debug("URL string: " + url_string)
 
         # Send data to server
-        self._logger.info("Sending to " + self._domain + self._path)
+        self._logger.info("Sending to " + 
+                          self._settings['domain'] + self._settings['path'])
         try:
             result = urllib2.urlopen(url_string)
         except urllib2.HTTPError as e:
