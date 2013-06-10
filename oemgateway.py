@@ -27,14 +27,11 @@ emoncms servers through OemGatewayEmoncmsBuffer instances.
 """
 class OemGateway(object):
     
-    def __init__(self, interface, logpath=None):
+    def __init__(self, interface):
         """Setup an RFM2Pi gateway.
         
         interface (OemGatewayInterface): User interface to the gateway.
         
-        logpath (path): Path to the file the log should be written into.
-            If Null, log to STDERR.
-
         """
 
         # Initialize exit request flag
@@ -42,18 +39,6 @@ class OemGateway(object):
 
         # Initialize logging
         self._log = logging.getLogger("OemGateway")
-        if (logpath is None):
-            # If no path was specified, everything goes to sys.stderr
-            loghandler = logging.StreamHandler()
-        else:
-            # Otherwise, rotating logging over two 5 MB files
-            loghandler = logging.handlers.RotatingFileHandler(logpath,
-                                                           'a', 5000 * 1024, 1)
-        loghandler.setFormatter(logging.Formatter(
-                '%(asctime)s %(levelname)s %(message)s'))
-        self._log.addHandler(loghandler)
-        self._log.setLevel(logging.DEBUG)
-        
         self._log.info("Opening gateway...")
         
         # Initialize gateway interface
@@ -169,14 +154,24 @@ if __name__ == "__main__":
         help='show RFM2Pi settings and exit (for debugging purposes)')
     args = parser.parse_args()
     
-    # If logfile is supplied, argparse opens the file in append mode, 
-    # this ensures it is writable
-    # Close the file for now and get its path
+    # Logging configuration
+    logger = logging.getLogger("OemGateway")
     if args.logfile is None:
-        logfile = None
+        # If no path was specified, everything goes to sys.stderr
+        loghandler = logging.StreamHandler()
     else:
+        # Otherwise, rotating logging over two 5 MB files
+        # If logfile is supplied, argparse opens the file in append mode,
+        # this ensures it is writable
+        # Close the file for now and get its path
         args.logfile.close()
-        logfile = args.logfile.name
+        loghandler = logging.handlers.RotatingFileHandler(args.logfile.name,
+                                                       'a', 5000 * 1024, 1)
+    # Format log strings
+    loghandler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s %(message)s'))
+    logger.addHandler(loghandler)
+    logger.setLevel(logging.DEBUG)
 
     # Initialize gateway interface
     # TODO: cmd line arg to choose another type of interface
@@ -189,7 +184,7 @@ if __name__ == "__main__":
     # Otherwise, create, run, and close OemGateway instance
     else:
         try:
-            gateway = OemGateway(interface, logpath=logfile)
+            gateway = OemGateway(interface)
         except Exception as e:
             print(e)
         else:
