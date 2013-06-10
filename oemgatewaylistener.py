@@ -22,10 +22,10 @@ their data source.
 """
 class OemGatewayListener(object):
 
-    def __init__(self, logger=None):
+    def __init__(self):
         
         # Initialize logger
-        self._logger = logging.getLogger(logger)
+        self._log = logging.getLogger("OemGateway")
         
     def open(self):
         """Open socket to read data from.
@@ -82,10 +82,10 @@ Monitors the serial port for data from RFM2Pi
 """
 class OemGatewayRFM2PiListener(OemGatewayListener):
 
-    def __init__(self, logger = None):
+    def __init__(self):
         
         # Initialization
-        super(OemGatewayRFM2PiListener, self).__init__(logger=logger)
+        super(OemGatewayRFM2PiListener, self).__init__()
 
         # Serial port
         self._ser = None
@@ -103,16 +103,16 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
     def open(self):
         """Open socket to read data from."""
 
-        self._logger.debug("Opening serial port: /dev/ttyAMA0")
+        self._log.debug("Opening serial port: /dev/ttyAMA0")
         
         try:
             self._ser = serial.Serial('/dev/ttyAMA0', 9600, timeout = 0)
         except serial.SerialException as e:
-            self._logger.error(e)
+            self._log.error(e)
             return False
         except Exception:
             import traceback
-            self._logger.error(
+            self._log.error(
                 "Couldn't open serial port, Exception: " 
                 + traceback.format_exc())
             return False
@@ -124,7 +124,7 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
         
         # Close serial port
         if self._ser is not None:
-            self._logger.debug("Closing serial port.")
+            self._log.debug("Closing serial port.")
             self._ser.close()
 
     def read(self):
@@ -148,7 +148,7 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
         self._rx_buf = re.sub('\\r\\n', '', self._rx_buf)
         
         # Log data
-        self._logger.info("Serial RX: " + self._rx_buf)
+        self._log.info("Serial RX: " + self._rx_buf)
         
         # Get an array out of the space separated string
         received = self._rx_buf.strip().split(' ')
@@ -164,14 +164,14 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
         # [node val1_lsb val1_msb val2_lsb val2_msb ...]
         # with number of elements odd and at least 3
         elif ((not (len(received) & 1)) or (len(received) < 3)):
-            self._logger.warning("Misformed RX frame: " + str(received))
+            self._log.warning("Misformed RX frame: " + str(received))
         
         # Else, process frame
         else:
             try:
                 received = [int(val) for val in received]
             except Exception:
-                self._logger.warning("Misformed RX frame: " + str(received))
+                self._log.warning("Misformed RX frame: " + str(received))
             else:
                 # Get node ID
                 node = received[0]
@@ -184,8 +184,8 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
                         value -= 65536
                     values.append(value)
                 
-                self._logger.debug("Node: " + str(node))
-                self._logger.debug("Values: " + str(values))
+                self._log.debug("Node: " + str(node))
+                self._log.debug("Values: " + str(values))
     
                 # Add data to send buffers
                 values.insert(0,node)
@@ -206,7 +206,7 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
             if key in ['baseid', 'frequency', 'sgroup']:
                 if value != self._settings[key]:
                     self._settings[key] = value
-                    self._logger.info("Setting RFM2Pi | %s: %s" % (key, value))
+                    self._log.info("Setting RFM2Pi | %s: %s" % (key, value))
                     string = value
                     if key == 'baseid':
                         string += 'i'
@@ -220,7 +220,7 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
             elif key == 'sendtimeinterval':
                 if value != self._settings[key]:
                     self._settings[key] = value
-                    self._logger.debug("Send time interval is now %s", value)
+                    self._log.debug("Send time interval is now %s", value)
 
     def run(self):
         """Actions that need to be done on a regular basis. 
@@ -251,7 +251,7 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
 
         now = datetime.datetime.now()
 
-        self._logger.debug("Broadcasting time: %d:%d" % (now.hour, now.minute))
+        self._log.debug("Broadcasting time: %d:%d" % (now.hour, now.minute))
 
         self._ser.write("%02d,00,%02d,00,s" % (now.hour, now.minute))
 

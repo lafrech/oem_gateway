@@ -20,13 +20,16 @@ User interface to communicate with the gateway.
 The run method is supposed to be run regularly by the instanciater.
 It is used to do regular tasks, and to return the gateway settings.
 
+This almost empty class is meant to be inherited by subclasses specific to
+each user interface.
+
 """
 class OemGatewayInterface(object):
 
-    def __init__(self, logger=None):
+    def __init__(self):
         
         # Initialize logger
-        self._logger = logging.getLogger(logger)
+        self._log = logging.getLogger("OemGateway")
         
         # Initialize settings
         self.settings = {}
@@ -34,7 +37,7 @@ class OemGatewayInterface(object):
     def run(self):
         """Run in background. 
         
-        Return settings (dict) when changed, None otherwise.
+        Return True if settings were modified.
 
         To be implemented in child class.
 
@@ -54,10 +57,10 @@ class OemGatewayInterface(object):
 
 class OemGatewayEmoncmsInterface(OemGatewayInterface):
 
-    def __init__(self, logger):
+    def __init__(self):
         
         # Initialization
-        super(OemGatewayEmoncmsInterface, self).__init__(logger=logger)
+        super(OemGatewayEmoncmsInterface, self).__init__()
 
         # Initialize status update timestamp
         self._status_update_timestamp = 0
@@ -113,7 +116,7 @@ class OemGatewayEmoncmsInterface(OemGatewayInterface):
 
         except Exception:
             import traceback
-            self._logger.warning("Couldn't get settings, Exception: " + 
+            self._log.warning("Couldn't get settings, Exception: " + 
                 traceback.format_exc())
             return
         
@@ -168,7 +171,7 @@ class OemGatewayEmoncmsInterface(OemGatewayInterface):
                 "http://localhost/emoncms/raspberrypi/setrunning.json")
         except Exception:
             import traceback
-            self._logger.warning(
+            self._log.warning(
                 "Couldn't update \"running\" status, Exception: " + 
                 traceback.format_exc())
 

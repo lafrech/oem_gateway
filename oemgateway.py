@@ -39,7 +39,7 @@ class OemGateway(object):
         self._exit = False
 
         # Initialize logging
-        self.log = logging.getLogger(__name__)
+        self._log = logging.getLogger("OemGateway")
         if (logpath is None):
             # If no path was specified, everything goes to sys.stderr
             loghandler = logging.StreamHandler()
@@ -49,13 +49,13 @@ class OemGateway(object):
                                                            'a', 5000 * 1024, 1)
         loghandler.setFormatter(logging.Formatter(
                 '%(asctime)s %(levelname)s %(message)s'))
-        self.log.addHandler(loghandler)
-        self.log.setLevel(logging.DEBUG)
+        self._log.addHandler(loghandler)
+        self._log.setLevel(logging.DEBUG)
         
-        self.log.info("Opening gateway...")
+        self._log.info("Opening gateway...")
         
         # Initialize gateway interface
-        self._interface = OemGatewayEmoncmsInterface(logger=__name__)
+        self._interface = OemGatewayEmoncmsInterface()
 
         #Initialize buffers and listeners dictionaries
         self._buffers = {}
@@ -109,7 +109,7 @@ class OemGateway(object):
         for l in self._listeners.itervalues():
             l.close()
         
-        self.log.info("Exiting gateway...")
+        self._log.info("Exiting gateway...")
         logging.shutdown()
 
     def return_settings(self):
@@ -118,7 +118,7 @@ class OemGateway(object):
     def _sigint_handler(self, signal, frame):
         """Catch SIGINT (Ctrl+C)."""
         
-        self.log.debug("SIGINT received.")
+        self._log.debug("SIGINT received.")
         # gateway should exit at the end of current iteration.
         self._exit = True
 
@@ -132,12 +132,10 @@ class OemGateway(object):
         for name, buf in settings['buffers'].iteritems():
             # If buffer does not exist, create it
             if name not in self._buffers:
-                init_settings = dict(buf['init_settings'])
-                init_settings['logger'] = __name__
                 # This gets the class from the 'type' string
-                self.log.info("Creating buffer %s", name)
+                self._log.info("Creating buffer %s", name)
                 self._buffers[name] = \
-                    globals()[buf['type']](**init_settings)
+                    globals()[buf['type']](**buf['init_settings'])
             # Set runtime settings
             self._buffers[name].set(**buf['runtime_settings'])
         # If existing buffer is not in settings anymore, delete it
@@ -149,12 +147,10 @@ class OemGateway(object):
         for name, lis in settings['listeners'].iteritems():
             # If listener does not exist, create it
             if name not in self._listeners:
-                init_settings = dict(lis['init_settings'])
-                init_settings['logger'] = __name__
                 # This gets the class from the 'type' string
-                self.log.info("Creating listener %s", name)
+                self._log.info("Creating listener %s", name)
                 self._listeners[name] = \
-                    globals()[lis['type']](**init_settings)
+                    globals()[lis['type']](**lis['init_settings'])
                 self._listeners[name].open() #TODO: catch opening error
             # Set runtime settings
             self._listeners[name].set(**lis['runtime_settings'])
@@ -183,9 +179,9 @@ if __name__ == "__main__":
         args.logfile.close()
         logfile = args.logfile.name
 
-    # Create, run, and close RFM2Pi Gateway instance
+    # Create, run, and close OemGateway instance
     try:
-        gateway = OemGateway(logfile)
+        gateway = OemGateway(logpath=logfile)
     except Exception as e:
         print(e)
     else:    
