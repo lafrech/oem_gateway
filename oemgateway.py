@@ -27,8 +27,10 @@ emoncms servers through OemGatewayEmoncmsBuffer instances.
 """
 class OemGateway(object):
     
-    def __init__(self, logpath=None):
+    def __init__(self, interface, logpath=None):
         """Setup an RFM2Pi gateway.
+        
+        interface (OemGatewayInterface): User interface to the gateway.
         
         logpath (path): Path to the file the log should be written into.
             If Null, log to STDERR.
@@ -55,7 +57,7 @@ class OemGateway(object):
         self._log.info("Opening gateway...")
         
         # Initialize gateway interface
-        self._interface = OemGatewayEmoncmsInterface()
+        self._interface = interface
 
         #Initialize buffers and listeners dictionaries
         self._buffers = {}
@@ -112,9 +114,6 @@ class OemGateway(object):
         self._log.info("Exiting gateway...")
         logging.shutdown()
 
-    def return_settings(self):
-        return self._interface.get_settings()
-    
     def _sigint_handler(self, signal, frame):
         """Catch SIGINT (Ctrl+C)."""
         
@@ -179,18 +178,22 @@ if __name__ == "__main__":
         args.logfile.close()
         logfile = args.logfile.name
 
-    # Create, run, and close OemGateway instance
-    try:
-        gateway = OemGateway(logpath=logfile)
-    except Exception as e:
-        print(e)
-    else:    
-        # If in "Show settings" mode, print settings and exit
-        if args.show_settings:
-            pprint.pprint(gateway.return_settings())
-        # Else, run normally
+    # Initialize gateway interface
+    # TODO: cmd line arg to choose another type of interface
+    interface = OemGatewayEmoncmsInterface()
+    
+    # If in "Show settings" mode, print settings and exit
+    if args.show_settings:
+        pprint.pprint(interface.get_settings())
+    
+    # Otherwise, create, run, and close OemGateway instance
+    else:
+        try:
+            gateway = OemGateway(interface, logpath=logfile)
+        except Exception as e:
+            print(e)
         else:
             gateway.run()
-        # When done, close gateway
-        gateway.close()
+            # When done, close gateway
+            gateway.close()
  
