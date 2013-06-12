@@ -92,7 +92,6 @@ class OemGateway(object):
     def close(self):
         """Close gateway. Do some cleanup before leaving."""
         
-        # TODO: what if it is not open ?
         for l in self._listeners.itervalues():
             l.close()
         
@@ -135,7 +134,10 @@ class OemGateway(object):
                 self._log.info("Creating listener %s", name)
                 self._listeners[name] = \
                     globals()[lis['type']](**lis['init_settings'])
-                self._listeners[name].open() #TODO: catch opening error
+                # If listener can't be opened, remove it and skip to next
+                if not self._listeners[name].open():
+                    del(self._listeners[name])
+                    continue
             # Set runtime settings
             self._listeners[name].set(**lis['runtime_settings'])
         # If existing listener is not in settings anymore, delete it
