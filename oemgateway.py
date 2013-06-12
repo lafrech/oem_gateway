@@ -62,7 +62,7 @@ class OemGateway(object):
         # Until asked to stop
         while not self._exit:
             
-            # Run interface and check if settings were modified
+            # Run interface and update settings if modified
             if self._interface.run():
                 self._update_settings(self._interface.settings)
             

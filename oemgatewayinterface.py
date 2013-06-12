@@ -32,7 +32,7 @@ class OemGatewayInterface(object):
         self._log = logging.getLogger("OemGateway")
         
         # Initialize settings
-        self.settings = {}
+        self.settings = None
 
     def run(self):
         """Run in background. 
@@ -41,7 +41,13 @@ class OemGatewayInterface(object):
 
         To be implemented in child class.
 
-        The settings is a dictionary with the following keys:
+        """
+        pass
+
+    def get_settings(self):
+        """Get settings
+        
+        Returns the settings is a dictionary with the following keys:
 
         'gateway': a dictionary containing the gateway settings
         'listeners': a dictionary containing the listeners
@@ -51,6 +57,10 @@ class OemGatewayInterface(object):
         'type': class name
         'init_settings': dictionary with initilization settings
         'runtime_settings': dictionary with runtime settings
+
+        Returns None if settings couldn't be obtained.
+
+        To be implemented in child class.
         
         """
         pass
@@ -85,16 +95,12 @@ class OemGatewayEmoncmsInterface(OemGatewayInterface):
             self._status_update_timestamp = now
             
             # Return True if settings modified
-            if settings != self.settings:
+            if (settings is not None) and (settings != self.settings):
                 self.settings = settings
                 return True
 
     def get_settings(self):
-        """Get settings
-        
-        Returns a dictionary
-
-        """
+        """Return settings"""
         
         # Get settings using emoncms API
         try:
@@ -161,7 +167,6 @@ class OemGatewayEmoncmsInterface(OemGatewayInterface):
             'active': bool(emoncms_s['remotesend'])}
 
         return settings
-
 
     def _gateway_running(self):
         """Update "script running" status."""
