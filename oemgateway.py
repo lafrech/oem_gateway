@@ -15,14 +15,16 @@ import signal
 import argparse
 import pprint
 
-from oemgatewayinterface import OemGatewayEmoncmsInterface
-from oemgatewaybuffer import OemGatewayEmoncmsBuffer
-from oemgatewaylistener import OemGatewayRFM2PiListener, OemGatewayListenerInitError
+import oemgatewayinterface as ogi
+import oemgatewaybuffer as ogb
+import oemgatewaylistener as ogl
 
 """class OemGateway
 
-Monitors the serial port for data from RFM2Pi and sends data to local or remote 
-emoncms servers through OemGatewayEmoncmsBuffer instances.
+Monitors data inputs through OemGatewayListener instances, and sends data to
+target servers through OemGatewayEmoncmsBuffer instances.
+
+Communicates with the user through an OemGatewayInterface
 
 """
 class OemGateway(object):
@@ -118,7 +120,7 @@ class OemGateway(object):
                 # This gets the class from the 'type' string
                 self._log.info("Creating buffer %s", name)
                 self._buffers[name] = \
-                    globals()[buf['type']](**buf['init_settings'])
+                    getattr(ogb, buf['type'])(**buf['init_settings'])
             # Set runtime settings
             self._buffers[name].set(**buf['runtime_settings'])
         # If existing buffer is not in settings anymore, delete it
@@ -132,11 +134,11 @@ class OemGateway(object):
             if name not in self._listeners:
                 self._log.info("Creating listener %s", name)
                 # This gets the class from the 'type' string
-                listener = globals()[lis['type']](**lis['init_settings'])
+                listener = getattr(ogl, lis['type'])(**lis['init_settings'])
                 # If listener can't be opened, log error and skip to next
                 try:
                     listener.open()
-                except OemGatewayListenerInitError as e:
+                except ogl.OemGatewayListenerInitError as e:
                     self._log.error(e)
                     continue
                 else:
@@ -180,7 +182,7 @@ if __name__ == "__main__":
 
     # Initialize gateway interface
     # TODO: cmd line arg to choose another type of interface
-    interface = OemGatewayEmoncmsInterface()
+    interface = ogi.OemGatewayEmoncmsInterface()
     
     # If in "Show settings" mode, print settings and exit
     if args.show_settings:
