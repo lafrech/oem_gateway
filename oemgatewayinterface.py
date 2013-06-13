@@ -133,7 +133,7 @@ class OemGatewayEmoncmsInterface(OemGatewayInterface):
         settings['listeners'] = {'RFM2Pi': {}}
         settings['listeners']['RFM2Pi'] = \
             {'type': 'OemGatewayRFM2PiListener', 
-            'init_settings': {}, # TODO: Add COM port
+            'init_settings': {'com_port': '/dev/ttyAMA0'},
             'runtime_settings': {}}
         for item in ['sgroup', 'frequency', 'baseid', 'sendtimeinterval']:
             settings['listeners']['RFM2Pi']['runtime_settings'][item] = \

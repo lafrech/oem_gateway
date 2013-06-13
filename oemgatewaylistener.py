@@ -82,12 +82,13 @@ Monitors the serial port for data from RFM2Pi
 """
 class OemGatewayRFM2PiListener(OemGatewayListener):
 
-    def __init__(self):
+    def __init__(self, com_port):
         
         # Initialization
         super(OemGatewayRFM2PiListener, self).__init__()
 
         # Serial port
+        self._com_port = com_port
         self._ser = None
 
         # Initialize RX buffer
@@ -103,10 +104,10 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
     def open(self):
         """Open socket to read data from."""
 
-        self._log.debug("Opening serial port: /dev/ttyAMA0")
+        self._log.debug('Opening serial port: %s', self._com_port)
         
         try:
-            self._ser = serial.Serial('/dev/ttyAMA0', 9600, timeout = 0)
+            self._ser = serial.Serial(self._com_port, 9600, timeout = 0)
         except serial.SerialException as e:
             self._log.error(e)
             return False
