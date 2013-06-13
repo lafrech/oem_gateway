@@ -12,6 +12,15 @@ import time, datetime
 import logging
 import re
 
+
+"""class OemGatewayListenerInitError
+
+Raise this when init fails.
+
+"""
+class OemGatewayListenerInitError(Exception):
+    pass
+
 """class OemGatewayListener
 
 Monitors a data source. 
@@ -110,14 +119,8 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
             self._ser = serial.Serial(self._com_port, 9600, timeout = 0)
         except serial.SerialException as e:
             self._log.error(e)
-            return False
-        except Exception:
-            import traceback
-            self._log.error(
-                "Couldn't open serial port, Exception: " 
-                + traceback.format_exc())
-            return False
-        
+            raise OemGatewayListenerInitError('Could not open COM port %s' %
+                                              self._com_port)
         return True
 
     def close(self):

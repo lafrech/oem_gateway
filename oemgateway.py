@@ -17,7 +17,7 @@ import pprint
 
 from oemgatewayinterface import OemGatewayEmoncmsInterface
 from oemgatewaybuffer import OemGatewayEmoncmsBuffer
-from oemgatewaylistener import OemGatewayRFM2PiListener
+from oemgatewaylistener import OemGatewayRFM2PiListener, OemGatewayListenerInitError
 
 """class OemGateway
 
@@ -130,14 +130,17 @@ class OemGateway(object):
         for name, lis in settings['listeners'].iteritems():
             # If listener does not exist, create it
             if name not in self._listeners:
-                # This gets the class from the 'type' string
                 self._log.info("Creating listener %s", name)
-                self._listeners[name] = \
-                    globals()[lis['type']](**lis['init_settings'])
-                # If listener can't be opened, remove it and skip to next
-                if not self._listeners[name].open():
-                    del(self._listeners[name])
+                # This gets the class from the 'type' string
+                listener = globals()[lis['type']](**lis['init_settings'])
+                # If listener can't be opened, log error and skip to next
+                try:
+                    listener.open()
+                except OemGatewayListenerInitError as e:
+                    self._log.error(e)
                     continue
+                else:
+                    self._listeners[name] = listener
             # Set runtime settings
             self._listeners[name].set(**lis['runtime_settings'])
         # If existing listener is not in settings anymore, delete it
