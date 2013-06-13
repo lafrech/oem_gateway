@@ -41,17 +41,9 @@ class OemGatewayListener(object):
         pass
 
     def read(self):
-        """Read data from socket.
+        """Read data from socket and process if complete line received.
 
-        Returns True if full line read
-
-        """
-        pass
-
-    def process(self):
-        """Process data in buffer.
-        
-        Returns a set of values as a list [NodeID, val1, val2]
+        Return data as a list: [NodeID, val1, val2]
         
         """
         pass
@@ -116,21 +108,20 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
             self._ser.close()
 
     def read(self):
-        """Read data from socket.
+        """Read data from socket and process if complete line received.
 
-        Returns True if full line read
-
+        Return data as a list: [NodeID, val1, val2]
+        
         """
         
         # Read serial RX
         self._rx_buf = self._rx_buf + self._ser.readline()
         
-        # If full line was read, return True
-        if ((self._rx_buf != '') and 
-            (self._rx_buf[len(self._rx_buf)-1] == '\n')):
-                return True
+        # If line incomplete, exit
+        if (self._rx_buf == '') or (self._rx_buf[len(self._rx_buf)-1] != '\n'):
+            return
 
-    def process(self):
+        # Otherwise, process line:
 
         # Remove CR,LF
         self._rx_buf = re.sub('\\r\\n', '', self._rx_buf)

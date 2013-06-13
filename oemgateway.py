@@ -77,15 +77,13 @@ class OemGateway(object):
             for l in self._listeners.itervalues():
                 # Execture run method
                 l.run()
-                # If complete line received
-                if(l.read() == True):
-                    # Process line
-                    values = l.process()
-                    # If data is valid
-                    if (values):
-                        # Buffer data
-                        for server_buf in self._buffers.itervalues():
-                            server_buf.add_data(values)
+                # Read socket
+                values = l.read()
+                # If complete and valid data was received
+                if values is not None:
+                    # Buffer data
+                    for server_buf in self._buffers.itervalues():
+                        server_buf.add_data(values)
             
             # For all buffers, if time has come, send data
             for s in self._buffers.itervalues():
