@@ -39,20 +39,20 @@ class OemGateway(object):
         # Initialize exit request flag
         self._exit = False
 
-        # Get settings
-        settings = interface.get_settings()
+        # Initialize gateway interface and get settings
+        self._interface = interface
+        self._interface.check_settings()
+        settings = self._interface.settings
         
         # Initialize logging
         self._log = logging.getLogger("OemGateway")
         self._set_logging_level(settings['gateway']['loglevel'])
         self._log.info("Opening gateway...")
         
-        # Initialize gateway interface
-        self._interface = interface
-
-        #Initialize buffers and listeners dictionaries
+        # Initialize buffers and listeners
         self._buffers = {}
         self._listeners = {}
+        self._update_settings(settings)
         
     def run(self):
         """Launch the gateway.
@@ -69,7 +69,8 @@ class OemGateway(object):
         while not self._exit:
             
             # Run interface and update settings if modified
-            if self._interface.run():
+            self._interface.run()
+            if self._interface.check_settings():
                 self._update_settings(self._interface.settings)
             
             # For all listeners
@@ -206,7 +207,8 @@ if __name__ == "__main__":
     
     # If in "Show settings" mode, print settings and exit
     if args.show_settings:
-        pprint.pprint(interface.get_settings())
+        interface.check_settings()
+        pprint.pprint(interface.settings)
     
     # Otherwise, create, run, and close OemGateway instance
     else:

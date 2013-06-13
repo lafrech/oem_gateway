@@ -17,8 +17,28 @@ import csv
 
 User interface to communicate with the gateway.
 
-The run method is supposed to be run regularly by the instanciater.
-It is used to do regular tasks, and to return the gateway settings.
+The settings attribute stores the settings of the gateway. It is a
+dictionnary with the following keys:
+
+        'gateway': a dictionary containing the gateway settings
+        'listeners': a dictionary containing the listeners
+        'buffer': a dictionary containing the buffers
+
+        The gateway settings are:
+        'loglevel': the logging level
+        
+        Listeners and buffers are dictionaries with the folowing keys:
+        'type': class name
+        'init_settings': dictionary with initialization settings
+        'runtime_settings': dictionary with runtime settings
+        Initialization and runtime settings depend on the listener and
+        buffer type.
+
+The run() method is supposed to be run regularly by the instanciater, to
+perform regular communication tasks.
+
+The check_settings() method is run regularly as well. It checks the settings 
+and returns True is settings were changed.
 
 This almost empty class is meant to be inherited by subclasses specific to
 each user interface.
@@ -37,27 +57,23 @@ class OemGatewayInterface(object):
     def run(self):
         """Run in background. 
         
-        Return True if settings were modified.
-
         To be implemented in child class.
 
         """
         pass
 
+    def check_settings(self):
+        """Check settings
+        
+        Update attribute settings and return True if modified.
+        
+        To be implemented in child class.
+        
+        """
+    
     def get_settings(self):
         """Get settings
         
-        Returns the settings is a dictionary with the following keys:
-
-        'gateway': a dictionary containing the gateway settings
-        'listeners': a dictionary containing the listeners
-        'buffer': a dictionary containing the buffers
-
-        Listeners and buffers are dictionaries with the folowing keys:
-        'type': class name
-        'init_settings': dictionary with initilization settings
-        'runtime_settings': dictionary with runtime settings
-
         Returns None if settings couldn't be obtained.
 
         To be implemented in child class.
@@ -74,6 +90,7 @@ class OemGatewayEmoncmsInterface(OemGatewayInterface):
 
         # Initialize status update timestamp
         self._status_update_timestamp = 0
+        self._settings_update_timestamp = 0
 
     def run(self):
         """Run in background. 
@@ -84,23 +101,27 @@ class OemGatewayEmoncmsInterface(OemGatewayInterface):
         
         """
         
-        # Update settings and status every second
+        # Update status every second
         now = time.time()
         if (now - self._status_update_timestamp > 1):
             # Update "running" status to inform emoncms the script is running
             self._gateway_running()
-            # Update settings
-            settings = self.get_settings()
             # "Thanks for the status update. You've made it crystal clear."
             self._status_update_timestamp = now
             
-            # Return True if settings modified
-            if (settings is not None) and (settings != self.settings):
-                self.settings = settings
-                return True
-
-    def get_settings(self):
-        """Return settings"""
+    def check_settings(self):
+        """Check settings
+        
+        Update attribute settings and return True if modified.
+        
+        """
+        
+        # Update status only once per second
+        now = time.time()
+        if (now - self._settings_update_timestamp < 1):
+            return
+        # Update timestamp
+        self._settings_update_timestamp = now
         
         # Get settings using emoncms API
         try:
@@ -168,7 +189,10 @@ class OemGatewayEmoncmsInterface(OemGatewayInterface):
             'period': 30,
             'active': bool(emoncms_s['remotesend'])}
 
-        return settings
+        # Return True if settings modified
+        if settings != self.settings:
+            self.settings = settings
+            return True
 
     def _gateway_running(self):
         """Update "script running" status."""
