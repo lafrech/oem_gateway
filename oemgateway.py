@@ -39,8 +39,12 @@ class OemGateway(object):
         # Initialize exit request flag
         self._exit = False
 
+        # Get settings
+        settings = interface.get_settings()
+        
         # Initialize logging
         self._log = logging.getLogger("OemGateway")
+        self._set_logging_level(settings['gateway']['loglevel'])
         self._log.info("Opening gateway...")
         
         # Initialize gateway interface
@@ -111,8 +115,9 @@ class OemGateway(object):
         """Check settings and update if needed."""
         
         # Gateway
-        #TODO: Add logging level, etc.
-
+        # Logging level
+        self._set_logging_level(settings['gateway']['loglevel'])
+        
         # Buffers
         for name, buf in settings['buffers'].iteritems():
             # If buffer does not exist, create it
@@ -126,6 +131,7 @@ class OemGateway(object):
         # If existing buffer is not in settings anymore, delete it
         for name in self._buffers:
             if name not in settings['buffers']:
+                self._log.info("Deleting buffer %s", name)
                 del(self._buffers[name])
 
         # Listeners
@@ -148,7 +154,22 @@ class OemGateway(object):
         for name in self._listeners:
             if name not in settings['listeners']:
                 self._listeners[name].close()
+                self._log.info("Deleting listener %s", name)
                 del(self._listeners[name])
+
+    def _set_logging_level(self, level):
+        """Set logging level.
+        
+        level (string): log level name in 
+        ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
+        
+        """
+        try:
+            loglevel = getattr(logging, level)
+        except AttributeError:
+            self._log.error('Logging level %s invalid' % level)
+        else:
+            self._log.setLevel(level)
 
 if __name__ == "__main__":
 
@@ -177,7 +198,7 @@ if __name__ == "__main__":
     loghandler.setFormatter(logging.Formatter(
             '%(asctime)s %(levelname)s %(message)s'))
     logger.addHandler(loghandler)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.CRITICAL)
 
     # Initialize gateway interface
     # TODO: cmd line arg to choose another type of interface

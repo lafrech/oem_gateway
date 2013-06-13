@@ -153,7 +153,7 @@ class OemGatewayEmoncmsBuffer(OemGatewayBuffer):
                                  traceback.format_exc())
         else:
             if (result.readline() == 'ok'):
-                self._log.info("Send ok")
+                self._log.debug("Send ok")
             else:
                 self._log.warning("Send failure")
         

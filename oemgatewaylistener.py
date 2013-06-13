@@ -207,8 +207,8 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
                     time.sleep(1)
             elif key == 'sendtimeinterval':
                 if value != self._settings[key]:
+                    self._log.ingo("Setting time interval to %s", value)
                     self._settings[key] = value
-                    self._log.debug("Send time interval is now %s", value)
 
     def run(self):
         """Actions that need to be done on a regular basis. 

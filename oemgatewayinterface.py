@@ -78,7 +78,7 @@ class OemGatewayEmoncmsInterface(OemGatewayInterface):
     def run(self):
         """Run in background. 
         
-        Return settings (dict) when changed, None otherwise.
+        Return True if settings changed, None otherwise.
         
         Update raspberry_pi running status.
         
@@ -126,8 +126,10 @@ class OemGatewayEmoncmsInterface(OemGatewayInterface):
                 traceback.format_exc())
             return
         
+        settings = {}
+        
         # Format OemGateway settings
-        settings = {'gateway': {}} #TODO: Add logging level
+        settings['gateway'] = {'loglevel': 'DEBUG'} # Stubbed until implemented
             
         # RFM2Pi listener
         settings['listeners'] = {'RFM2Pi': {}}
