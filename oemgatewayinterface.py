@@ -116,7 +116,7 @@ class OemGatewayEmoncmsInterface(OemGatewayInterface):
         
         """
         
-        # Update status only once per second
+        # Check settings only once per second
         now = time.time()
         if (now - self._settings_update_timestamp < 1):
             return
