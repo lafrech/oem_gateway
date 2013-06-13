@@ -36,14 +36,6 @@ class OemGatewayListener(object):
         # Initialize logger
         self._log = logging.getLogger("OemGateway")
         
-    def open(self):
-        """Open socket to read data from.
-        
-        Returns True in case of success, False in case of failure.
-        
-        """
-        pass
-
     def close(self):
         """Close socket."""
         pass
@@ -97,9 +89,14 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
         super(OemGatewayRFM2PiListener, self).__init__()
 
         # Serial port
-        self._com_port = com_port
-        self._ser = None
-
+        self._log.debug('Opening serial port: %s', com_port)
+        
+        try:
+            self._ser = serial.Serial(com_port, 9600, timeout = 0)
+        except serial.SerialException as e:
+            self._log.error(e)
+            raise OemGatewayListenerInitError('Could not open COM port %s' %
+                                              com_port)
         # Initialize RX buffer
         self._rx_buf = ''
 
@@ -109,19 +106,6 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
         
         # Initialize time updata timestamp
         self._time_update_timestamp = 0
-
-    def open(self):
-        """Open socket to read data from."""
-
-        self._log.debug('Opening serial port: %s', self._com_port)
-        
-        try:
-            self._ser = serial.Serial(self._com_port, 9600, timeout = 0)
-        except serial.SerialException as e:
-            self._log.error(e)
-            raise OemGatewayListenerInitError('Could not open COM port %s' %
-                                              self._com_port)
-        return True
 
     def close(self):
         """Close socket."""

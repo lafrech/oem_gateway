@@ -133,12 +133,11 @@ class OemGateway(object):
             # If listener does not exist, create it
             if name not in self._listeners:
                 self._log.info("Creating listener %s", name)
-                # This gets the class from the 'type' string
-                listener = getattr(ogl, lis['type'])(**lis['init_settings'])
-                # If listener can't be opened, log error and skip to next
                 try:
-                    listener.open()
+                    # This gets the class from the 'type' string
+                    listener = getattr(ogl, lis['type'])(**lis['init_settings'])
                 except ogl.OemGatewayListenerInitError as e:
+                    # If listener can't be created, log error and skip to next
                     self._log.error(e)
                     continue
                 else:
