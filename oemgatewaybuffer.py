@@ -22,15 +22,7 @@ destination server.
 class OemGatewayBuffer(object):
 
     def __init__(self):
-        """Create a server data buffer initialized with server settings.
-        
-        domain (string): domain name (eg: 'domain.tld')
-        path (string): emoncms path with leading slash (eg: '/emoncms')
-        apikey (string): API key with write access
-        period (int): sending interval in seconds
-        active (bool): whether the data buffer is active
-        
-        """
+        """Create a server data buffer initialized with server settings."""
         
         # Initialize logger
         self._log = logging.getLogger("OemGateway")
@@ -45,6 +37,12 @@ class OemGatewayBuffer(object):
         
         **kwargs (dict): settings to be modified.
         
+        domain (string): domain name (eg: 'domain.tld')
+        path (string): emoncms path with leading slash (eg: '/emoncms')
+        apikey (string): API key with write access
+        period (string): sending interval in seconds
+        active (string): whether the data buffer is active (True/False)
+        
         """
 
         for key, value in kwargs.iteritems():
@@ -57,7 +55,7 @@ class OemGatewayBuffer(object):
 
         """
        
-        if not self._settings['active']:
+        if not bool(self._settings['active']):
             return
         
         self._log.debug("Server " + 
@@ -78,7 +76,7 @@ class OemGatewayBuffer(object):
 
         """
         now = time.time()
-        if (now - self._last_send > self._settings['period']):
+        if (now - self._last_send > int(self._settings['period'])):
             return True
     
     def has_data(self):
@@ -108,7 +106,7 @@ class OemGatewayEmoncmsBuffer(OemGatewayBuffer):
     def send_data(self):
         """Send data to server."""
         
-        if not self._settings['active']:
+        if not bool(self._settings['active']):
             return
 
         # Prepare data string with the values in data buffer
