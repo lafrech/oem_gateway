@@ -11,7 +11,7 @@ import urllib2
 import time
 import logging
 import csv
-#import configobj
+from configobj import ConfigObj
 
 """class OemGatewayInterface
 
@@ -88,14 +88,16 @@ class OemGatewayEmoncmsInterface(OemGatewayInterface):
         # Initialization
         super(OemGatewayEmoncmsInterface, self).__init__()
 
-        # Initialize status update timestamp
+        # Initialize update timestamps
         self._status_update_timestamp = 0
         self._settings_update_timestamp = 0
+        self._retry_time_interval = 60
+
+        # Check settings
+        self.check_settings()
 
     def run(self):
         """Run in background. 
-        
-        Return True if settings changed, None otherwise.
         
         Update raspberry_pi running status.
         
@@ -145,6 +147,7 @@ class OemGatewayEmoncmsInterface(OemGatewayInterface):
             import traceback
             self._log.warning("Couldn't get settings, Exception: " + 
                 traceback.format_exc())
+            self._settings_update_timestamp = now + self._retry_time_interval
             return
         
         settings = {}
@@ -205,4 +208,71 @@ class OemGatewayEmoncmsInterface(OemGatewayInterface):
             self._log.warning(
                 "Couldn't update \"running\" status, Exception: " + 
                 traceback.format_exc())
+
+class OemGatewayFileInterface(OemGatewayInterface):
+
+    def __init__(self, filename):
+        
+        # Initialization
+        super(OemGatewayFileInterface, self).__init__()
+
+        # Initialize update timestamp
+        self._settings_update_timestamp = 0
+        self._retry_time_interval = 60
+
+        # Initialize attribute settings as a ConfigObj instance
+        try:
+            self.settings = ConfigObj(filename, file_error=True)
+        except IOError as e:
+            raise OemGatewayInterfaceInitError(e)
+        except SyntaxError as e:
+            raise OemGatewayInterfaceInitError( \
+                'Error parsing config file \"%s\": ' % filename + str(e))
+
+    def check_settings(self):
+        """Check settings
+        
+        Update attribute settings and return True if modified.
+        
+        """
+        
+        # Check settings only once per second
+        now = time.time()
+        if (now - self._settings_update_timestamp < 1):
+            return
+        # Update timestamp
+        self._settings_update_timestamp = now
+        
+        # Backup settings
+        settings = dict(self.settings)
+        
+        # Get settings from file
+        try:
+            self.settings.reload()
+        except IOError as e:
+            self._log.warning('Could not get settings: ' + str(e))
+            self._settings_update_timestamp = now + self._retry_time_interval
+            return
+        except SyntaxError as e:
+            self._log.warning('Could not get settings: ' + 
+                              'Error parsing config file: ' + str(e))
+            self._settings_update_timestamp = now + self._retry_time_interval
+            return
+        except Exception:
+            import traceback
+            self._log.warning("Couldn't get settings, Exception: " + 
+                traceback.format_exc())
+            self._settings_update_timestamp = now + self._retry_time_interval
+            return
+        
+        if self.settings != settings:
+            return True
+
+"""class OemGatewayInterfaceInitError
+
+Raise this when init fails.
+
+"""
+class OemGatewayInterfaceInitError(Exception):
+    pass
 

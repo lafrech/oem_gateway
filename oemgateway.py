@@ -9,6 +9,7 @@
 
 """
 
+import sys
 import time
 import logging, logging.handlers
 import signal
@@ -41,7 +42,6 @@ class OemGateway(object):
 
         # Initialize gateway interface and get settings
         self._interface = interface
-        self._interface.check_settings()
         settings = self._interface.settings
         
         # Initialize logging
@@ -173,11 +173,17 @@ class OemGateway(object):
 if __name__ == "__main__":
 
     # Command line arguments parser
-    parser = argparse.ArgumentParser(description='RFM2Pi Gateway')
+    parser = argparse.ArgumentParser(description='OpenEnergyMonitor Gateway')
+    # Settings source
+    settings_group = parser.add_mutually_exclusive_group()
+    settings_group.add_argument("--config-file", action="store", help='Configuration file')
+    settings_group.add_argument("--config-emoncms", action="store_true", help='Get configuration from emoncms')
+    # Logfile
     parser.add_argument('--logfile', action='store', type=argparse.FileType('a'),
         help='path to optional log file (default: log to Standard error stream STDERR)')
+    # Show settings
     parser.add_argument('--show-settings', action='store_true',
-        help='show RFM2Pi settings and exit (for debugging purposes)')
+        help='show settings and exit (for debugging purposes)')
     args = parser.parse_args()
     
     # Logging configuration
@@ -200,9 +206,16 @@ if __name__ == "__main__":
     logger.setLevel(logging.CRITICAL)
 
     # Initialize gateway interface
-    # TODO: cmd line arg to choose another type of interface
-    interface = ogi.OemGatewayEmoncmsInterface()
-    
+    if args.config_emoncms:
+        interface = ogi.OemGatewayEmoncmsInterface()
+    elif args.config_file is None:
+        args.config_file = 'oemgateway.conf'
+        try:
+            interface = ogi.OemGatewayFileInterface(args.config_file)
+        except ogi.OemGatewayInterfaceInitError as e:
+            logger.critical(e)
+            sys.exit(0)
+ 
     # If in "Show settings" mode, print settings and exit
     if args.show_settings:
         interface.check_settings()

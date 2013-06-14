@@ -12,15 +12,6 @@ import time, datetime
 import logging
 import re
 
-
-"""class OemGatewayListenerInitError
-
-Raise this when init fails.
-
-"""
-class OemGatewayListenerInitError(Exception):
-    pass
-
 """class OemGatewayListener
 
 Monitors a data source. 
@@ -198,7 +189,7 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
                     time.sleep(1)
             elif key == 'sendtimeinterval':
                 if value != self._settings[key]:
-                    self._log.info("Setting time interval to %s", value)
+                    self._log.info("Setting send time interval to %s", value)
                     self._settings[key] = value
 
     def run(self):
@@ -233,4 +224,12 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
         self._log.debug("Broadcasting time: %d:%d" % (now.hour, now.minute))
 
         self._ser.write("%02d,00,%02d,00,s" % (now.hour, now.minute))
+
+"""class OemGatewayListenerInitError
+
+Raise this when init fails.
+
+"""
+class OemGatewayListenerInitError(Exception):
+    pass
 
