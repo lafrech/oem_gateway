@@ -81,16 +81,10 @@ class OemGateway(object):
                 values = l.read()
                 # If complete and valid data was received
                 if values is not None:
-                    # Buffer data
-                    for server_buf in self._buffers.itervalues():
-                        server_buf.add_data(values)
+                    # Send data through server buffers
+                    for b in self._buffers.itervalues():
+                        b.send(values)
             
-            # For all buffers, if time has come, send data
-            for s in self._buffers.itervalues():
-                if s.check_time():
-                    if s.has_data():
-                        s.send_data()
-        
             # Sleep until next iteration
             time.sleep(0.2);
          
