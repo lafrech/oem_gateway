@@ -85,6 +85,11 @@ class OemGateway(object):
                     for b in self._buffers.itervalues():
                         b.send(values)
             
+            # For all buffers
+            for b in self._buffers.itervalues():
+                # Execture run method
+                b.run()
+
             # Sleep until next iteration
             time.sleep(0.2);
          
