@@ -55,7 +55,7 @@ class OemGatewayBuffer(object):
 
         """
        
-        if not bool(self._settings['active']):
+        if self._settings['active'] == 'False':
             return
         
         self._log.debug("Server " + 
