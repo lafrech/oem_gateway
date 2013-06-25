@@ -163,11 +163,9 @@ class OemGateway(object):
         
         """
         try:
-            loglevel = getattr(logging, level)
-        except AttributeError:
-            self._log.error('Logging level %s invalid' % level)
-        else:
             self._log.setLevel(level)
+        except ValueError:
+            self._log.error('Logging level %s invalid' % level)
 
 if __name__ == "__main__":
 
