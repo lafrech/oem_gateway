@@ -162,10 +162,18 @@ class OemGateway(object):
         ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
         
         """
+        
+        # Check level argument is valid
         try:
-            self._log.setLevel(level)
-        except ValueError:
+            loglevel = getattr(logging, level)
+        except AttributeError:
             self._log.error('Logging level %s invalid' % level)
+            return False
+        
+        # Change level if different from current level
+        if loglevel != self._log.getEffectiveLevel():
+            self._log.setLevel(level)
+            self._log.info('Logging level set to %s' % level)
 
 if __name__ == "__main__":
 
@@ -200,7 +208,6 @@ if __name__ == "__main__":
     loghandler.setFormatter(logging.Formatter(
             '%(asctime)s %(levelname)s %(message)s'))
     logger.addHandler(loghandler)
-    logger.setLevel(logging.CRITICAL)
 
     # Initialize gateway interface
     if args.config_emoncms:
