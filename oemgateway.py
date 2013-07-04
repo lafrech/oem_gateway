@@ -210,10 +210,14 @@ if __name__ == "__main__":
     logger.addHandler(loghandler)
 
     # Initialize gateway interface
+    # Emoncms GUI interface
     if args.config_emoncms:
         interface = ogi.OemGatewayEmoncmsInterface()
-    elif args.config_file is None:
-        args.config_file = 'oemgateway.conf'
+    # Text config file
+    else:
+        # Default filename if none specified
+        if args.config_file is None:
+            args.config_file = 'oemgateway.conf'
         try:
             interface = ogi.OemGatewayFileInterface(args.config_file)
         except ogi.OemGatewayInterfaceInitError as e:
