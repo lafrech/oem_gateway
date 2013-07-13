@@ -11,6 +11,7 @@ import serial
 import time, datetime
 import logging
 import re
+import socket, select
 
 """class OemGatewayListener
 
@@ -148,7 +149,7 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
                 
                 # Recombine transmitted chars into signed int
                 values = []
-                for i in range(1,len(received),2):
+                for i in range(1, len(received),2):
                     value = received[i] + 256 * received[i+1]
                     if value > 32768:
                         value -= 65536
@@ -157,8 +158,8 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
                 self._log.debug("Node: " + str(node))
                 self._log.debug("Values: " + str(values))
     
-                # Add data to send buffers
-                values.insert(0,node)
+                # Insert node ID before data
+                values.insert(0, node)
 
                 return values
 
@@ -224,6 +225,98 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
         self._log.debug("Broadcasting time: %d:%d" % (now.hour, now.minute))
 
         self._ser.write("%02d,00,%02d,00,s" % (now.hour, now.minute))
+
+"""class OemGatewaySocketListener
+
+Monitors a socket for data, typically from ethernet link
+
+"""
+class OemGatewaySocketListener(OemGatewayListener):
+
+    def __init__(self, socket_nb):
+        
+        # Initialization
+        super(OemGatewaySocketListener, self).__init__()
+
+        # Open socket
+        self._log.debug('Opening socket: %s', socket_nb)
+        
+        try:
+            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._socket.bind(('', int(socket_nb)))
+            self._socket.listen(1)
+        except socket.error as e:
+            self._log.error(e)
+            raise OemGatewayListenerInitError('Could not open socket %s' %
+                                            socket_nb)
+        # Initialize RX buffer
+        self._rx_buf = ''
+
+    def close(self):
+        """Close socket."""
+        
+        # Close socket
+        if self._socket is not None:
+           self._log.debug('Closing socket')
+           self._socket.close()
+
+    def read(self):
+        """Read data from socket and process if complete line received.
+
+        Return data as a list: [NodeID, val1, val2]
+        
+        """
+        
+        # Check if data received
+        ready_to_read, ready_to_write, in_error = \
+            select.select([self._socket], [], [], 0)
+
+        # If nothing received, return
+        if self._socket not in ready_to_read:
+            return
+
+        # Otherwise, accept connection
+        conn, addr = self._socket.accept()
+        
+        # Read data
+        self._rx_buf = self._rx_buf + conn.recv(1024)
+        
+        # Close connection
+        conn.close()
+
+        # If line incomplete, exit
+        if (self._rx_buf == '') or (self._rx_buf[len(self._rx_buf)-1] != '\n'):
+            return
+
+        # Otherwise, process line:
+
+        # Remove CR,LF
+        self._rx_buf = re.sub('\\r\\n', '', self._rx_buf)
+        
+        # Log data
+        self._log.info("Serial RX: " + self._rx_buf)
+        
+        # Get an array out of the space separated string
+        received = self._rx_buf.strip().split(' ')
+        
+        # Empty serial_rx_buf
+        self._rx_buf = ''
+        
+        # Discard if frame not of the form [node val1 ...]
+        # with number of elements at least 2
+        if (len(received) < 2):
+            self._log.warning("Misformed RX frame: " + str(received))
+        
+        # Else, process frame
+        else:
+            try:
+                received = [int(val) for val in received]
+            except Exception:
+                self._log.warning("Misformed RX frame: " + str(received))
+            else:
+                self._log.debug("Node: " + str(received[0]))
+                self._log.debug("Values: " + str(received[1:]))
+                return received
 
 """class OemGatewayListenerInitError
 
