@@ -233,22 +233,22 @@ Monitors a socket for data, typically from ethernet link
 """
 class OemGatewaySocketListener(OemGatewayListener):
 
-    def __init__(self, socket_nb):
+    def __init__(self, port_nb):
         
         # Initialization
         super(OemGatewaySocketListener, self).__init__()
 
         # Open socket
-        self._log.debug('Opening socket: %s', socket_nb)
+        self._log.debug('Opening socket on port %s', port_nb)
         
         try:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._socket.bind(('', int(socket_nb)))
+            self._socket.bind(('', int(port_nb)))
             self._socket.listen(1)
         except socket.error as e:
             self._log.error(e)
-            raise OemGatewayListenerInitError('Could not open socket %s' %
-                                            socket_nb)
+            raise OemGatewayListenerInitError('Could not open port %s' %
+                                            port_nb)
         # Initialize RX buffer
         self._rx_buf = ''
 
