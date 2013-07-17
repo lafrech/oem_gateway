@@ -25,11 +25,11 @@ for help on command line arguments.
 
 ## Configuration
 
-The gateway can be paramterized through a config file or through emoncms API.
+The gateway can be paramterized through a config file or through emoncms GUI.
 
-### emoncms API
+### emoncms GUI
 
-To use the emoncms API, pass the --config-emoncms flag.
+To use the emoncms GUI, pass the --config-emoncms flag.
 
 ### Configuration file
 
@@ -45,12 +45,12 @@ The --show-settings lets oemgateway output the settings for verification.
 
 ## Logging
 
-Logging can be output to a file or on the standard output. To log to a file, 
-use the --logfile argument to specify a file path.
+Logging can be output to a file or on the standard output (default). 
+To log to a file, use the --logfile argument to specify a file path.
 
 The logging level is a config parameter.
 
-# Listeners
+# Listeners
 
 Listeners derive the OemGatewayListener class.
 
@@ -58,9 +58,9 @@ Listeners derive the OemGatewayListener class.
 
 Receives data on the serial port through the RFM2Pi module.
 
-### Init settings
+### Init settings
 
-com_port
+* com_port: path to the COM port (e.g. /dev/ttyAMA0)
 
 ### Runtime settings
 
@@ -69,19 +69,19 @@ RFM settings:
 * frequency
 * baseid
 
-sendtimeinterval: if not 0, period in seconds. The gateway will send time 
-on the radio link to other devices, typically emonGLCD.
+* sendtimeinterval: if not 0, period in seconds. The gateway will send time 
+on the radio link with this period, for other devices, typically emonGLCD.
 
 ## OemGatewaySocketListener
 
 Receives date through a socket. From another machine on the network or from 
 another application on the same host.
 
-Note that no authentification is implemented.
+Note that neither acknowledgement nor authentication is implemented.
 
-### Init settings
+### Init settings
 
-port_nb: port number
+* port_nb: port number
 
 ### Runtime settings
 
@@ -100,9 +100,8 @@ until the network is up again.
 
 None
 
-### Runtime settings
+### Runtime settings
 
-Runtime settings are:
 * protocol: http:// or https://
 * domain (e.g. emoncms.org)
 * path (e.g. /emoncms)
