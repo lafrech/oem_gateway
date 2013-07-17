@@ -10,7 +10,6 @@
 import serial
 import time, datetime
 import logging
-import re
 import socket, select
 
 """class OemGatewayListener
@@ -110,13 +109,13 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
         self._rx_buf = self._rx_buf + self._ser.readline()
         
         # If line incomplete, exit
-        if (self._rx_buf == '') or (self._rx_buf[len(self._rx_buf)-1] != '\n'):
+        if '\r\n' not in self._rx_buf:
             return
 
         # Otherwise, process line:
 
         # Remove CR,LF
-        self._rx_buf = re.sub('\\r\\n', '', self._rx_buf)
+        self._rx_buf = self._rx_buf[:-2]
         
         # Log data
         self._log.info("Serial RX: " + self._rx_buf)
@@ -271,36 +270,30 @@ class OemGatewaySocketListener(OemGatewayListener):
         ready_to_read, ready_to_write, in_error = \
             select.select([self._socket], [], [], 0)
 
-        # If nothing received, return
-        if self._socket not in ready_to_read:
+        # If data received, add it to RX buffer
+        if self._socket in ready_to_read:
+
+            # Accept connection
+            conn, addr = self._socket.accept()
+            
+            # Read data
+            self._rx_buf = self._rx_buf + conn.recv(1024)
+            
+            # Close connection
+            conn.close()
+
+        # If no complete frame, exit
+        if '\r\n' not in self._rx_buf:
             return
 
-        # Otherwise, accept connection
-        conn, addr = self._socket.accept()
-        
-        # Read data
-        self._rx_buf = self._rx_buf + conn.recv(1024)
-        
-        # Close connection
-        conn.close()
+        # Otherwise, process first frame in buffer:
+        f, self._rx_buf = self._rx_buf.split('\r\n', 1)
 
-        # If line incomplete, exit
-        if (self._rx_buf == '') or (self._rx_buf[len(self._rx_buf)-1] != '\n'):
-            return
-
-        # Otherwise, process line:
-
-        # Remove CR,LF
-        self._rx_buf = re.sub('\\r\\n', '', self._rx_buf)
-        
         # Log data
-        self._log.info("Serial RX: " + self._rx_buf)
+        self._log.info("Serial RX: " + f)
         
         # Get an array out of the space separated string
-        received = self._rx_buf.strip().split(' ')
-        
-        # Empty serial_rx_buf
-        self._rx_buf = ''
+        received = f.strip().split(' ')
         
         # Discard if frame not of the form [node val1 ...]
         # with number of elements at least 2
