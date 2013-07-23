@@ -54,13 +54,13 @@ The logging level is a config parameter.
 
 Listeners derive the OemGatewayListener class:
 
-OemGatewayListener
-  |
-  |-- OemGatewaySerialListener
-  |     |
-  |     |-- OemGatewayRFM2PiListener
-  |
-  |-- OemGatewaySocketListener
+    OemGatewayListener
+      |
+      |-- OemGatewaySerialListener
+      |     |
+      |     |-- OemGatewayRFM2PiListener
+      |
+      |-- OemGatewaySocketListener
 
 ## OemGatewaySerialListener 
 
@@ -111,9 +111,9 @@ None
 
 Buffers derive the OemGatewayBuffer class.
 
-OemGatewayBuffer
-  |
-  |-- OemGatewayEmoncmsBuffer
+    OemGatewayBuffer
+      |
+      |-- OemGatewayEmoncmsBuffer
 
 ## OemGatewayEmoncmsBuffer
 
