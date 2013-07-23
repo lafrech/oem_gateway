@@ -33,7 +33,7 @@ To use the emoncms GUI, pass the --config-emoncms flag.
 
 ### Configuration file
 
-To use a config file, pass  --config-file CONFIG_FILE.
+Use the --config-file argument to specify a file path.
 
 To create a config file, copy oemgateway.conf.dist and customize.
 
@@ -52,7 +52,27 @@ The logging level is a config parameter.
 
 # Listeners
 
-Listeners derive the OemGatewayListener class.
+Listeners derive the OemGatewayListener class:
+
+OemGatewayListener
+  |
+  |-- OemGatewaySerialListener
+  |     |
+  |     |-- OemGatewayRFM2PiListener
+  |
+  |-- OemGatewaySocketListener
+
+## OemGatewaySerialListener 
+
+Receives data on the serial port.
+
+### Init settings
+
+* com_port: path to the COM port (e.g. /dev/ttyAMA0)
+
+### Runtime settings
+
+None
 
 ## OemGatewayRFM2PiListener 
 
@@ -90,6 +110,10 @@ None
 # Buffers
 
 Buffers derive the OemGatewayBuffer class.
+
+OemGatewayBuffer
+  |
+  |-- OemGatewayEmoncmsBuffer
 
 ## OemGatewayEmoncmsBuffer
 

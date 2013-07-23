@@ -39,6 +39,43 @@ class OemGatewayListener(object):
         """
         pass
 
+    def _process_frame(self, f):
+        """Process a frame of data
+
+        f (string): 'NodeID val1 val2 ...'
+
+        This function splits the string into integers and checks their 
+        validity.
+
+        'NodeID val1 val2 ...' is the generic data format. If the source uses 
+        a different format, override this method.
+        
+        Return data as a list: [NodeID, val1, val2]
+
+        """
+
+        # Log data
+        self._log.info("Serial RX: " + f)
+        
+        # Get an array out of the space separated string
+        received = f.strip().split(' ')
+        
+        # Discard if frame not of the form [node, val1, ...]
+        # with number of elements at least 2
+        if (len(received) < 2):
+            self._log.warning("Misformed RX frame: " + str(received))
+        
+        # Else, process frame
+        else:
+            try:
+                received = [int(val) for val in received]
+            except Exception:
+                self._log.warning("Misformed RX frame: " + str(received))
+            else:
+                self._log.debug("Node: " + str(received[0]))
+                self._log.debug("Values: " + str(received[1:]))
+                return received
+    
     def set(self, **kwargs):
         """Set configuration parameters.
 
@@ -57,19 +94,17 @@ class OemGatewayListener(object):
         """
         pass
 
+"""class OemGatewaySerialListener
 
-
-"""class OemGatewayRFM2PiListener
-
-Monitors the serial port for data from RFM2Pi
+Monitors the serial port for data
 
 """
-class OemGatewayRFM2PiListener(OemGatewayListener):
+class OemGatewaySerialListener(OemGatewayListener):
 
     def __init__(self, com_port):
         
         # Initialization
-        super(OemGatewayRFM2PiListener, self).__init__()
+        super(OemGatewaySerialListener, self).__init__()
 
         # Serial port
         self._log.debug('Opening serial port: %s', com_port)
@@ -83,13 +118,6 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
         # Initialize RX buffer
         self._rx_buf = ''
 
-        # Initialize settings
-        self._settings = {'baseid': '', 'frequency': '', 'sgroup': '', 
-            'sendtimeinterval': ''}
-        
-        # Initialize time updata timestamp
-        self._time_update_timestamp = 0
-
     def close(self):
         """Close socket."""
         
@@ -99,7 +127,7 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
             self._ser.close()
 
     def read(self):
-        """Read data from socket and process if complete line received.
+        """Read data from serial port and process if complete line received.
 
         Return data as a list: [NodeID, val1, val2]
         
@@ -112,19 +140,50 @@ class OemGatewayRFM2PiListener(OemGatewayListener):
         if '\r\n' not in self._rx_buf:
             return
 
-        # Otherwise, process line:
-
         # Remove CR,LF
-        self._rx_buf = self._rx_buf[:-2]
+        f = self._rx_buf[:-2]
+
+        # Reset buffer
+        self._rx_buf = ''
+
+        # Process data frame
+        return self._process_frame(f)
+
+"""class OemGatewayRFM2PiListener
+
+Monitors the serial port for data from RFM2Pi
+
+"""
+class OemGatewayRFM2PiListener(OemGatewaySerialListener):
+
+    def __init__(self, com_port):
+        
+        # Initialization
+        super(OemGatewayRFM2PiListener, self).__init__(com_port)
+
+        # Initialize settings
+        self._settings = {'baseid': '', 'frequency': '', 'sgroup': '', 
+            'sendtimeinterval': ''}
+        
+        # Initialize time updata timestamp
+        self._time_update_timestamp = 0
+
+    def _process_frame(self, f):
+        """Process a frame of data
+
+        f (string): 'NodeID val1_lsb val1_msb val2_lsb val2_msb ...'
+
+        This function recombines the integers and checks their validity.
+        
+        Return data as a list: [NodeID, val1, val2]
+
+        """
         
         # Log data
-        self._log.info("Serial RX: " + self._rx_buf)
+        self._log.info("Serial RX: " + f)
         
         # Get an array out of the space separated string
-        received = self._rx_buf.strip().split(' ')
-        
-        # Empty serial_rx_buf
-        self._rx_buf = ''
+        received = f.strip().split(' ')
         
         # If information message, discard
         if ((received[0] == '>') or (received[0] == '->')):
@@ -288,28 +347,7 @@ class OemGatewaySocketListener(OemGatewayListener):
 
         # Otherwise, process first frame in buffer:
         f, self._rx_buf = self._rx_buf.split('\r\n', 1)
-
-        # Log data
-        self._log.info("Serial RX: " + f)
-        
-        # Get an array out of the space separated string
-        received = f.strip().split(' ')
-        
-        # Discard if frame not of the form [node val1 ...]
-        # with number of elements at least 2
-        if (len(received) < 2):
-            self._log.warning("Misformed RX frame: " + str(received))
-        
-        # Else, process frame
-        else:
-            try:
-                received = [int(val) for val in received]
-            except Exception:
-                self._log.warning("Misformed RX frame: " + str(received))
-            else:
-                self._log.debug("Node: " + str(received[0]))
-                self._log.debug("Values: " + str(received[1:]))
-                return received
+        return self._process_frame(f)
 
 """class OemGatewayListenerInitError
 
