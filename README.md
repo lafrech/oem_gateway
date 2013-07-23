@@ -7,11 +7,20 @@ It runs as a gateway from one or more data sources (listeners)
 to one or more target databases (buffers). See below for the description
 of existing listeners and buffers.
 
+# Dependencies
+
+This software depends on:
+
+* python-serial for the serial port management
+* python-configobj for the config file parsing
+
+    sudo aptitude install python-serial python-configobj
+
 # Usage
 
 Make oemgateway.py executable:
 
-     chmod +x oemgateway.py
+    chmod +x oemgateway.py
 
 Run: 
 
