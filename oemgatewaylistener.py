@@ -282,7 +282,7 @@ class OemGatewayRFM2PiListener(OemGatewaySerialListener):
 
         self._log.debug("Broadcasting time: %d:%d" % (now.hour, now.minute))
 
-        self._ser.write("%02d,00,%02d,00,s" % (now.hour, now.minute))
+        self._ser.write("00,%02d,%02d,00,s" % (now.hour, now.minute))
 
 """class OemGatewaySocketListener
 
