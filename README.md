@@ -75,11 +75,13 @@ The gateway can be paramterized through a config file or through emoncms GUI.
 
 #### emoncms GUI
 
-To use the emoncms GUI, pass the --config-emoncms flag.
+To use the emoncms GUI, use --config-emoncms to specify an URL.
+
+E.g., --config-emoncms http://localhost/emoncms/
 
 #### Configuration file
 
-Use the --config-file argument to specify a file path.
+Use --config-file argument to specify a file path.
 
 To create a config file, copy oemgateway.conf.dist and customize.
 

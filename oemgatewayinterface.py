@@ -11,6 +11,7 @@ import urllib2
 import time
 import logging
 import csv
+import urlparse
 from configobj import ConfigObj
 
 """class OemGatewayInterface
@@ -83,15 +84,39 @@ class OemGatewayInterface(object):
 
 class OemGatewayEmoncmsInterface(OemGatewayInterface):
 
-    def __init__(self):
+    def __init__(self, local_url='http://localhost/emoncms'):
+        """Initialize emoncms interface
+
+        local_url (string): URL to local emoncms server
+
+        """
         
         # Initialization
         super(OemGatewayEmoncmsInterface, self).__init__()
+
+        # Initialize local server settings
+        url = urlparse.urlparse(local_url)
+        self._local_protocol = url.scheme + '://'
+        self._local_domain = url.netloc
+        self._local_path = url.path 
 
         # Initialize update timestamps
         self._status_update_timestamp = 0
         self._settings_update_timestamp = 0
         self._retry_time_interval = 60
+
+        # Check local emoncms URL is valid
+        try:
+            # Dummy time request
+            result = urllib2.urlopen(self._local_protocol +
+                                     self._local_domain +
+                                     self._local_path +
+                                     "/time/local.json")
+        
+        except Exception:
+            import traceback
+            raise OemGatewayInterfaceInitError("Failure while connecting to " +
+                 local_url + ":\n" + traceback.format_exc())
 
         # Check settings
         self.check_settings()
@@ -127,8 +152,10 @@ class OemGatewayEmoncmsInterface(OemGatewayInterface):
         
         # Get settings using emoncms API
         try:
-            result = urllib2.urlopen(
-                "http://localhost/emoncms/raspberrypi/get.json")
+            result = urllib2.urlopen(self._local_protocol +
+                                     self._local_domain +
+                                     self._local_path +
+                                     "/raspberrypi/get.json")
             result = result.readline()
             # result is of the form
             # {"userid":"1","sgroup":"210",...,"remoteprotocol":"http:\\/\\/"}
@@ -173,9 +200,9 @@ class OemGatewayEmoncmsInterface(OemGatewayInterface):
             'init_settings': {},
             'runtime_settings': {}}
         settings['buffers']['emoncms_local']['runtime_settings'] = \
-            {'protocol': 'http://',
-            'domain': 'localhost',
-            'path': '/emoncms',
+            {'protocol': self._local_protocol,
+            'domain': self._local_domain,
+            'path': self._local_path,
             'apikey': emoncms_s['apikey'],
             'active': 'True'}
         # Remote
@@ -199,8 +226,10 @@ class OemGatewayEmoncmsInterface(OemGatewayInterface):
         """Update "script running" status."""
         
         try:
-            result = urllib2.urlopen(
-                "http://localhost/emoncms/raspberrypi/setrunning.json")
+            result = urllib2.urlopen(self._local_protocol +
+                                     self._local_domain +
+                                     self._local_path +
+                                     "/raspberrypi/setrunning.json") 
         except Exception:
             import traceback
             self._log.warning(

@@ -179,10 +179,10 @@ if __name__ == "__main__":
 
     # Command line arguments parser
     parser = argparse.ArgumentParser(description='OpenEnergyMonitor Gateway')
-    # Settings source
+    # Configuration source: config file or emoncms
     settings_group = parser.add_mutually_exclusive_group()
     settings_group.add_argument("--config-file", action="store", help='Configuration file')
-    settings_group.add_argument("--config-emoncms", action="store_true", help='Get configuration from emoncms')
+    settings_group.add_argument("--config-emoncms", action="store", help='URL to local emoncms')
     # Logfile
     parser.add_argument('--logfile', action='store', type=argparse.FileType('a'),
         help='path to optional log file (default: log to Standard error stream STDERR)')
@@ -212,7 +212,11 @@ if __name__ == "__main__":
     # Initialize gateway interface
     # Emoncms GUI interface
     if args.config_emoncms:
-        interface = ogi.OemGatewayEmoncmsInterface()
+        try:
+            interface = ogi.OemGatewayEmoncmsInterface(args.config_emoncms)
+        except ogi.OemGatewayInterfaceInitError as e:
+            logger.critical(e)
+            sys.exit("Invalid emoncms URL: "+ args.config_emoncms)
     # Text config file
     else:
         # Default filename if none specified
