@@ -18,17 +18,17 @@ This software depends on:
 
 # Usage
 
-Make oemgateway.py executable:
+Make oemgateway executable:
 
-    chmod +x oemgateway.py
+    chmod +x oemgateway
 
 Run: 
 
-    ./oemgateway.py
+    ./oemgateway
 
 Use 
 
-    ./oemgateway.py --help 
+    ./oemgateway --help 
 
 for help on command line arguments.
 

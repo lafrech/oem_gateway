@@ -31,7 +31,7 @@ Communicates with the user through an OemGatewayInterface
 class OemGateway(object):
     
     def __init__(self, interface):
-        """Setup an RFM2Pi gateway.
+        """Setup an OpenEnergyMonitor gateway.
         
         interface (OemGatewayInterface): User interface to the gateway.
         
@@ -217,7 +217,7 @@ if __name__ == "__main__":
     else:
         # Default filename if none specified
         if args.config_file is None:
-            args.config_file = 'oemgateway.conf'
+            args.config_file = sys.path[0]+'/oemgateway.conf'
         try:
             interface = ogi.OemGatewayFileInterface(args.config_file)
         except ogi.OemGatewayInterfaceInitError as e:
