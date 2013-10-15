@@ -26,11 +26,46 @@ Run:
 
     ./oemgateway
 
-Use 
+For help on command line arguments
 
     ./oemgateway --help 
 
-for help on command line arguments.
+# To run the gateway as a daemon
+
+## Grant write privilege to logging file (skip if logging is not used)
+
+Create groupe emoncms and make user pi part of it 
+   
+    sudo groupadd emoncms 
+    sudo usermod -a -G emoncms pi
+
+Create a directory for the logfile and give ownership to user pi, group emoncms
+
+    sudo mkdir /var/log/oemgateway
+    sudo chown pi:emoncms /var/log/oemgateway
+    sudo chmod 750 /var/log/oemgateway
+
+## Make script run as daemon on startup
+
+Copy and customize init script
+    
+    sudo cp oemgateway.init.dist /etc/init.d/oemgateway
+    sudo vi /etc/init.d/oemgateway # Customize init script: path, command line arguments
+    sudo chmod 755 /etc/init.d/oemgateway
+
+The gateway can be started or stopped anytime with following commands:
+
+    sudo /etc/init.d/oemgataway start
+    sudo /etc/init.d/oemgataway stop
+    sudo /etc/init.d/oemgataway restart
+
+To run automatically on startup
+
+    sudo update-rc.d oemgateway defaults 99
+
+To stop running automatically on startup
+
+    sudo update-rc.d -f oemgateway remove
 
 ## Configuration
 
