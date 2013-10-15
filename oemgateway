@@ -222,7 +222,7 @@ if __name__ == "__main__":
             interface = ogi.OemGatewayFileInterface(args.config_file)
         except ogi.OemGatewayInterfaceInitError as e:
             logger.critical(e)
-            sys.exit(0)
+            sys.exit("Configuration file not found: "+ args.config_file)
  
     # If in "Show settings" mode, print settings and exit
     if args.show_settings:
@@ -234,7 +234,7 @@ if __name__ == "__main__":
         try:
             gateway = OemGateway(interface)
         except Exception as e:
-            print(e)
+            sys.exit("Could not start OemGateway: " + str(e))
         else:
             gateway.run()
             # When done, close gateway
