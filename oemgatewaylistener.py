@@ -94,6 +94,44 @@ class OemGatewayListener(object):
         """
         pass
 
+    def _open_serial_port(self, com_port):
+        """Open serial port
+
+        com_port (string): path to COM port
+
+        """
+        
+        self._log.debug('Opening serial port: %s', com_port)
+        
+        try:
+            s = serial.Serial(com_port, 9600, timeout = 0)
+        except serial.SerialException as e:
+            self._log.error(e)
+            raise OemGatewayListenerInitError('Could not open COM port %s' %
+                                              com_port)
+        else:
+            return s
+    
+    def _open_socket(self, port_nb):
+        """Open a socket
+
+        port_nb (string): port number on which to open the socket
+
+        """
+
+        self._log.debug('Opening socket on port %s', port_nb)
+        
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.bind(('', int(port_nb)))
+            s.listen(1)
+        except socket.error as e:
+            self._log.error(e)
+            raise OemGatewayListenerInitError('Could not open port %s' %
+                                            port_nb)
+        else:
+            return s
+
 """class OemGatewaySerialListener
 
 Monitors the serial port for data
@@ -111,15 +149,9 @@ class OemGatewaySerialListener(OemGatewayListener):
         # Initialization
         super(OemGatewaySerialListener, self).__init__()
 
-        # Serial port
-        self._log.debug('Opening serial port: %s', com_port)
+        # Open serial port
+        self._ser = self._open_serial_port(com_port)
         
-        try:
-            self._ser = serial.Serial(com_port, 9600, timeout = 0)
-        except serial.SerialException as e:
-            self._log.error(e)
-            raise OemGatewayListenerInitError('Could not open COM port %s' %
-                                              com_port)
         # Initialize RX buffer
         self._rx_buf = ''
 
@@ -312,16 +344,8 @@ class OemGatewaySocketListener(OemGatewayListener):
         super(OemGatewaySocketListener, self).__init__()
 
         # Open socket
-        self._log.debug('Opening socket on port %s', port_nb)
-        
-        try:
-            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._socket.bind(('', int(port_nb)))
-            self._socket.listen(1)
-        except socket.error as e:
-            self._log.error(e)
-            raise OemGatewayListenerInitError('Could not open port %s' %
-                                            port_nb)
+        self._socket = self._open_socket(port_nb)
+
         # Initialize RX buffer for socket
         self._sock_rx_buf = ''
 
@@ -383,16 +407,8 @@ class OemGatewayRFM2PiListenerRepeater(OemGatewayRFM2PiListener):
         super(OemGatewayRFM2PiListenerRepeater, self).__init__(com_port)
 
         # Open socket
-        self._log.debug('Opening socket on port %s', port_nb)
+        self._socket = self._open_socket(port_nb)
         
-        try:
-            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._socket.bind(('', int(port_nb)))
-            self._socket.listen(1)
-        except socket.error as e:
-            self._log.error(e)
-            raise OemGatewayListenerInitError('Could not open port %s' %
-                                            port_nb)
         # Initialize RX buffer for socket
         self._sock_rx_buf = ''
 
