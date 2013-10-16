@@ -102,6 +102,11 @@ Monitors the serial port for data
 class OemGatewaySerialListener(OemGatewayListener):
 
     def __init__(self, com_port):
+        """Initialize listener
+
+        com_port (string): path to COM port
+
+        """
         
         # Initialization
         super(OemGatewaySerialListener, self).__init__()
@@ -157,6 +162,11 @@ Monitors the serial port for data from RFM2Pi
 class OemGatewayRFM2PiListener(OemGatewaySerialListener):
 
     def __init__(self, com_port):
+        """Initialize listener
+
+        com_port (string): path to COM port
+
+        """
         
         # Initialization
         super(OemGatewayRFM2PiListener, self).__init__(com_port)
@@ -292,7 +302,12 @@ Monitors a socket for data, typically from ethernet link
 class OemGatewaySocketListener(OemGatewayListener):
 
     def __init__(self, port_nb):
-        
+        """Initialize listener
+
+        port_nb (string): port number on which to open the socket
+
+        """
+ 
         # Initialization
         super(OemGatewaySocketListener, self).__init__()
 
@@ -307,8 +322,8 @@ class OemGatewaySocketListener(OemGatewayListener):
             self._log.error(e)
             raise OemGatewayListenerInitError('Could not open port %s' %
                                             port_nb)
-        # Initialize RX buffer
-        self._rx_buf = ''
+        # Initialize RX buffer for socket
+        self._sock_rx_buf = ''
 
     def close(self):
         """Close socket."""
@@ -329,25 +344,87 @@ class OemGatewaySocketListener(OemGatewayListener):
         ready_to_read, ready_to_write, in_error = \
             select.select([self._socket], [], [], 0)
 
-        # If data received, add it to RX buffer
+        # If data received, add it to socket RX buffer
         if self._socket in ready_to_read:
 
             # Accept connection
             conn, addr = self._socket.accept()
             
             # Read data
-            self._rx_buf = self._rx_buf + conn.recv(1024)
+            self._sock_rx_buf = self._sock_rx_buf + conn.recv(1024)
             
             # Close connection
             conn.close()
 
-        # If no complete frame, exit
-        if '\r\n' not in self._rx_buf:
-            return
+        # If there is at least one complete frame in the buffer
+        if '\r\n' in self._sock_rx_buf:
+            
+            # Process and return first frame in buffer:
+            f, self._sock_rx_buf = self._sock_rx_buf.split('\r\n', 1)
+            return self._process_frame(f)
 
-        # Otherwise, process first frame in buffer:
-        f, self._rx_buf = self._rx_buf.split('\r\n', 1)
-        return self._process_frame(f)
+"""class OemGatewayRFM2PiListenerRepeater
+
+Monitors the serial port for data from RFM2Pi, 
+and repeats on RF link the frames received through a socket
+
+"""
+class OemGatewayRFM2PiListenerRepeater(OemGatewayRFM2PiListener):
+
+    def __init__(self, com_port, port_nb):
+        """Initialize listener
+
+        com_port (string): path to COM port
+        port_nb (string): port number on which to open the socket
+
+        """
+        
+        # Initialization
+        super(OemGatewayRFM2PiListenerRepeater, self).__init__(com_port)
+
+        # Open socket
+        self._log.debug('Opening socket on port %s', port_nb)
+        
+        try:
+            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._socket.bind(('', int(port_nb)))
+            self._socket.listen(1)
+        except socket.error as e:
+            self._log.error(e)
+            raise OemGatewayListenerInitError('Could not open port %s' %
+                                            port_nb)
+        # Initialize RX buffer for socket
+        self._sock_rx_buf = ''
+
+    def run(self):
+        """Monitor socket and repeat data if complete frame received."""
+
+        # Execute run() method from parent
+        super(OemGatewayRFM2PiListenerRepeater, self).run()
+                        
+        # Check if data received on socket
+        ready_to_read, ready_to_write, in_error = \
+        select.select([self._socket], [], [], 0)
+
+        # If data received, add it to socket RX buffer
+        if self._socket in ready_to_read:
+
+            # Accept connection
+            conn, addr = self._socket.accept()
+                                                                                                                        
+            # Read data
+            self._sock_rx_buf = self._sock_rx_buf + conn.recv(1024)
+            
+            # Close connection
+            conn.close()
+
+        # If there is at least one complete frame in the buffer
+        if '\r\n' in self._sock_rx_buf:
+            
+            # Send first frame in buffer:
+            f, self._sock_rx_buf = self._sock_rx_buf.split('\r\n', 1)
+            self._log.info("Sending frame: %s", f)
+            self._ser.write(f)
 
 """class OemGatewayListenerInitError
 
