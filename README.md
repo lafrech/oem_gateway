@@ -115,6 +115,8 @@ Listeners derive the OemGatewayListener class:
       |-- OemGatewaySerialListener
       |     |
       |     |-- OemGatewayRFM2PiListener
+      |           |
+      |           |-- OemGatewayRFM2PiListenerRepeater
       |
       |-- OemGatewaySocketListener
 
@@ -148,9 +150,25 @@ RFM settings:
 * sendtimeinterval: if not 0, period in seconds. The gateway will send time 
 on the radio link with this period, for other devices, typically emonGLCD.
 
+#### OemGatewayRFM2PiListenerRepeater
+
+Receives data on the serial port through the RFM2Pi module, and transmits 
+messages received throught a socket on the RF link.
+
+Note that neither acknowledgement nor authentication is implemented.
+
+##### Init settings
+
+* com_port: path to the COM port (e.g. /dev/ttyAMA0)
+* port_nb: port number
+
+##### Runtime settings
+
+Same as OemGatewayRFM2PiListener
+
 #### OemGatewaySocketListener
 
-Receives date through a socket. From another machine on the network or from 
+Receives data through a socket. From another machine on the network or from 
 another application on the same host.
 
 Note that neither acknowledgement nor authentication is implemented.
