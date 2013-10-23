@@ -46,10 +46,8 @@ class OemGatewayBuffer(object):
         for key, value in kwargs.iteritems():
             self._settings[key] = value
 
-    def send(self, data):
-        """Send data to server.
-
-        In case of send error, buffer data to retry later.
+    def add(self, data):
+        """Append data to buffer.
 
         data (list): node and values (eg: '[node,val1,val2,...]')
 
@@ -58,17 +56,19 @@ class OemGatewayBuffer(object):
         if self._settings['active'] == 'False':
             return
         
+        # Timestamp = time now
+        t = int(time.time())
+        
         self._log.debug("Server " + 
                            self._settings['domain'] + self._settings['path'] + 
-                           " -> send data: " + str(data))
+                           " -> buffer data: " + str(data) + 
+                           ", timestamp: " + str(t))
         
-        # Try to send data, if failure, store to resend later
-        if not self._send_data(data):
-            # Append data set [timestamp, [node, val1, val2, val3,...]] 
-            # to _data_buffer
-            self._data_buffer.append([int(time.time()), data])
+        # Append data set [timestamp, [node, val1, val2, val3,...]] 
+        # to _data_buffer
+        self._data_buffer.append([t, data])
 
-    def _send_data(self, data, time=None):
+    def _send_data(self, data, time):
         """Send data to server.
 
         data (list): node and values (eg: '[node,val1,val2,...]')
@@ -81,24 +81,19 @@ class OemGatewayBuffer(object):
         """
         pass
 
-    def run(self):
-        """Placeholder for background tasks.
-
-        Buffer management: Retry to send data that couldn't be sent
-
-        Can be extended in subclasses to add specific actions to be executed
-        on a regular basis.
-
-        """
+    def flush(self):
+        """Send oldest data in buffer, if any."""
         
         # Buffer management
-        # If data buffer not empty, try to send a sample
+        # If data buffer not empty, send a set of values
         if self._data_buffer != []:
             time, data = self._data_buffer[0]
             self._log.debug("Server " + 
                            self._settings['domain'] + self._settings['path'] + 
-                           " -> send again data: " + str(data))
-            if self._send_data(data, time=time):
+                           " -> send data: " + str(data) + 
+                           ", timestamp: " + str(time))
+            if self._send_data(data, time):
+                # In case of success, delete sample set from buffer
                 del self._data_buffer[0]
         # If buffer size reaches maximum, trash oldest values
         # TODO: optionnal write to file instead of losing data
@@ -113,14 +108,13 @@ Stores server parameters and buffers the data between two HTTP requests
 """
 class OemGatewayEmoncmsBuffer(OemGatewayBuffer):
 
-    def _send_data(self, data, time=None):
+    def _send_data(self, data, time):
         """Send data to server."""
         
         # Prepare data string with the values in data buffer
         data_string = ''
         # Timestamp
-        if time is not None:
-            data_string += '&time=' + str(time)
+        data_string += '&time=' + str(time)
         # Node ID
         data_string += '&node=' + str(data[0])
         # Data
