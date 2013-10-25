@@ -84,6 +84,9 @@ class OemGatewayBuffer(object):
     def flush(self):
         """Send oldest data in buffer, if any."""
         
+        if self._settings['active'] == 'False':
+            return
+        
         # Buffer management
         # If data buffer not empty, send a set of values
         if self._data_buffer != []:
