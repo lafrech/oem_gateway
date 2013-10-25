@@ -129,7 +129,7 @@ class OemGatewayEmoncmsBuffer(OemGatewayBuffer):
         data_string = '[' 
         for (timestamp, data) in data_to_send:
             data_string += '['
-            data_string += str(int(round(timestamp-time.time())))
+            data_string += str(round(timestamp-time.time(),2))
             for sample in data:
                 data_string += ','
                 data_string += str(sample)
