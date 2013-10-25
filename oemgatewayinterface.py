@@ -204,6 +204,7 @@ class OemGatewayEmoncmsInterface(OemGatewayInterface):
             'domain': self._local_domain,
             'path': self._local_path,
             'apikey': emoncms_s['apikey'],
+            'period': '0',
             'active': 'True'}
         # Remote
         settings['buffers']['emoncms_remote'] = \
@@ -215,6 +216,7 @@ class OemGatewayEmoncmsInterface(OemGatewayInterface):
             'domain': emoncms_s['remotedomain'],
             'path': emoncms_s['remotepath'],
             'apikey': emoncms_s['remoteapikey'],
+            'period': '30',
             'active': emoncms_s['remotesend']}
 
         # Return True if settings modified
