@@ -152,7 +152,7 @@ class OemGatewayEmoncmsBuffer(OemGatewayBuffer):
         self._log.info("Sending to " + 
                           self._settings['domain'] + self._settings['path'])
         try:
-            result = urllib2.urlopen(url_string)
+            result = urllib2.urlopen(url_string, timeout=60)
         except urllib2.HTTPError as e:
             self._log.warning("Couldn't send to server, HTTPError: " + 
                                  str(e.code))
