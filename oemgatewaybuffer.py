@@ -126,10 +126,11 @@ class OemGatewayEmoncmsBuffer(OemGatewayBuffer):
         data_to_keep = self._data_buffer[MAX_DATA_SETS_PER_POST:]
 
         # Prepare data string with the values in data buffer
+        now = time.time()
         data_string = '[' 
         for (timestamp, data) in data_to_send:
             data_string += '['
-            data_string += str(round(timestamp-time.time(),2))
+            data_string += str(round(timestamp-now,2))
             for sample in data:
                 data_string += ','
                 data_string += str(sample)
