@@ -57,7 +57,7 @@ class OemGatewayBuffer(object):
             return
         
         # Timestamp = now
-        timestamp = round(time.time(),2)
+        t = round(time.time(),2)
         
         self._log.debug("Server " + 
                            self._settings['domain'] + self._settings['path'] + 
