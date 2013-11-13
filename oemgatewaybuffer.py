@@ -104,11 +104,9 @@ class OemGatewayBuffer(object):
         
         # If buffer size reaches maximum, trash oldest values
         # TODO: optionnal write to file instead of losing data
-        MAX_DATA_SETS_IN_BUFFER = 1000
         size = len(self._data_buffer)
-        if size > MAX_DATA_SETS_IN_BUFFER:
-            self._data_buffer = \
-                self._data_buffer[size - MAX_DATA_SETS_IN_BUFFER:]
+        if size > 1000:
+            self._data_buffer = self._data_buffer[size - 1000:]
 
 """class OemGatewayEmoncmsBuffer
 
@@ -119,15 +117,10 @@ class OemGatewayEmoncmsBuffer(OemGatewayBuffer):
 
     def _send_data(self):
         """Send data to server."""
-       
-        # Do not send more than 100 datasets each time (totally arbitrary)
-        MAX_DATA_SETS_PER_POST = 100
-        data_to_send = self._data_buffer[0:MAX_DATA_SETS_PER_POST]
-        data_to_keep = self._data_buffer[MAX_DATA_SETS_PER_POST:]
-
+        
         # Prepare data string with the values in data buffer
         data_string = '[' 
-        for (timestamp, data) in data_to_send:
+        for (timestamp, data) in self._data_buffer:
             data_string += '['
             data_string += str(int(round(timestamp-time.time())))
             for sample in data:
@@ -168,7 +161,7 @@ class OemGatewayEmoncmsBuffer(OemGatewayBuffer):
             if (result.readline() == 'ok'):
                 self._log.debug("Send ok")
                 # Send ok -> empty buffer
-                self._data_buffer = data_to_keep
+                self._data_buffer = []
                 return True
             else:
                 self._log.warning("Send failure")
