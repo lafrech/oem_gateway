@@ -204,6 +204,5 @@ None
 * domain (e.g. emoncms.org)
 * path (e.g. /emoncms)
 * apikey
-* period: period between two data sendings (in seconds)
 * active: if False, neither record nor send data, but hold unsent data.
 

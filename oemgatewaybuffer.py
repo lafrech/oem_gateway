@@ -22,14 +22,13 @@ destination server.
 class OemGatewayBuffer(object):
 
     def __init__(self):
-        """Create a server data buffer."""
+        """Create a server data buffer initialized with server settings."""
         
         # Initialize logger
         self._log = logging.getLogger("OemGateway")
         
         # Initialize variables
         self._data_buffer = []
-        self._last_send = time.time()
         self._settings = {}
         
     def set(self, **kwargs):
@@ -40,7 +39,6 @@ class OemGatewayBuffer(object):
         domain (string): domain name (eg: 'domain.tld')
         path (string): emoncms path with leading slash (eg: '/emoncms')
         apikey (string): API key with write access
-        period (string): sending interval in seconds
         active (string): whether the data buffer is active (True/False)
         
         """
@@ -55,7 +53,6 @@ class OemGatewayBuffer(object):
 
         """
        
-        # Check buffer is active
         if self._settings['active'] == 'False':
             return
         
@@ -65,14 +62,17 @@ class OemGatewayBuffer(object):
         self._log.debug("Server " + 
                            self._settings['domain'] + self._settings['path'] + 
                            " -> buffer data: " + str(data) + 
-                           ", timestamp: " + str(timestamp))
+                           ", timestamp: " + str(t))
         
         # Append data set [timestamp, [node, val1, val2, val3,...]] 
         # to _data_buffer
-        self._data_buffer.append([timestamp, data])
+        self._data_buffer.append([t, data])
 
-    def _send_data(self):
+    def _send_data(self, data, time):
         """Send data to server.
+
+        data (list): node and values (eg: '[node,val1,val2,...]')
+        time (int): timestamp, time when sample was recorded
 
         return True if data sent correctly
         
@@ -82,26 +82,22 @@ class OemGatewayBuffer(object):
         pass
 
     def flush(self):
-        """Send data in buffer, if any."""
+        """Send oldest data in buffer, if any."""
         
-        # Check buffer is active
         if self._settings['active'] == 'False':
             return
         
-        # Check sending period
-        if (time.time() - self._last_send < int(self._settings['period'])):
-            return
-        
-        # If data buffer not empty, send data
+        # Buffer management
+        # If data buffer not empty, send a set of values
         if self._data_buffer != []:
-            self._log.debug("Server " + self._settings['domain'] + 
-                            self._settings['path'] + " -> flush buffer")
-            
-            self._send_data()
-        
-        # Update time of last data sending
-        self._last_send = time.time()
-        
+            time, data = self._data_buffer[0]
+            self._log.debug("Server " + 
+                           self._settings['domain'] + self._settings['path'] + 
+                           " -> send data: " + str(data) + 
+                           ", timestamp: " + str(time))
+            if self._send_data(data, time):
+                # In case of success, delete sample set from buffer
+                del self._data_buffer[0]
         # If buffer size reaches maximum, trash oldest values
         # TODO: optionnal write to file instead of losing data
         size = len(self._data_buffer)
@@ -115,29 +111,30 @@ Stores server parameters and buffers the data between two HTTP requests
 """
 class OemGatewayEmoncmsBuffer(OemGatewayBuffer):
 
-    def _send_data(self):
+    def _send_data(self, data, time):
         """Send data to server."""
         
         # Prepare data string with the values in data buffer
-        data_string = '[' 
-        for (timestamp, data) in self._data_buffer:
-            data_string += '['
-            data_string += str(int(round(timestamp-time.time())))
-            for sample in data:
-                data_string += ','
-                data_string += str(sample)
-            data_string += '],'
-        # Remove trailing comma and close bracket
-        data_string = data_string[0:-1]+']'
-
+        data_string = ''
+        # Timestamp
+        data_string += '&time=' + str(time)
+        # Node ID
+        data_string += '&node=' + str(data[0])
+        # Data
+        data_string += '&json={'
+        for i, val in enumerate(data[1:]):
+            data_string += str(i+1) + ':' + str(val)
+            data_string += ','
+        # Remove trailing comma and close braces
+        data_string = data_string[0:-1]+'}'
         self._log.debug("Data string: " + data_string)
         
         # Prepare URL string of the form
-        # 'http://domain.tld/emoncms/input/bulk.json?apikey=
-        # 12345&data=[[-10,10,1806],[-5,10,1806],[0,10,1806]]'
+        # 'http://domain.tld/emoncms/input/post.json?apikey=12345
+        # &node=10&json={1:1806, 2:1664}'
         url_string = self._settings['protocol'] + self._settings['domain'] + \
-                     self._settings['path'] + "/input/bulk.json?apikey=" + \
-                     self._settings['apikey'] + "&data=" + data_string
+                     self._settings['path'] + '/input/post.json?apikey=' + \
+                     self._settings['apikey'] + data_string
         self._log.debug("URL string: " + url_string)
 
         # Send data to server
@@ -160,8 +157,6 @@ class OemGatewayEmoncmsBuffer(OemGatewayBuffer):
         else:
             if (result.readline() == 'ok'):
                 self._log.debug("Send ok")
-                # Send ok -> empty buffer
-                self._data_buffer = []
                 return True
             else:
                 self._log.warning("Send failure")

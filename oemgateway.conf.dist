@@ -62,7 +62,6 @@ loglevel = DEBUG
         apikey = xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
         protocol = http://
         active = True
-        period = 0
         path = /emoncms
 
 [[emoncms_remote]]
@@ -73,6 +72,5 @@ loglevel = DEBUG
         apikey = xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
         protocol = http://
         active = True
-        period = 30
         path = /emoncms
 
