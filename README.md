@@ -55,9 +55,9 @@ Copy and customize init script
 
 The gateway can be started or stopped anytime with following commands:
 
-    sudo /etc/init.d/oemgateway start
-    sudo /etc/init.d/oemgateway stop
-    sudo /etc/init.d/oemgateway restart
+    sudo service oemgateway start
+    sudo service oemgateway stop
+    sudo service oemgateway restart
 
 To run automatically on startup
 
