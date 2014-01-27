@@ -44,8 +44,7 @@ class OemGatewayListener(object):
 
         f (string): 'NodeID val1 val2 ...'
 
-        This function splits the string into integers and checks their 
-        validity.
+        This function splits the string into numbers and check its validity.
 
         'NodeID val1 val2 ...' is the generic data format. If the source uses 
         a different format, override this method.
@@ -68,7 +67,7 @@ class OemGatewayListener(object):
         # Else, process frame
         else:
             try:
-                received = [int(val) for val in received]
+                received = [float(val) for val in received]
             except Exception:
                 self._log.warning("Misformed RX frame: " + str(received))
             else:
@@ -240,6 +239,7 @@ class OemGatewayRFM2PiListener(OemGatewaySerialListener):
         # Else, process frame
         else:
             try:
+                # Only integers are expected
                 received = [int(val) for val in received]
             except Exception:
                 self._log.warning("Misformed RX frame: " + str(received))
