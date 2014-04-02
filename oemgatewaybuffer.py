@@ -11,6 +11,17 @@ import urllib2, httplib
 import time
 import logging
 
+"""class AbstractBuffer
+
+Represents the actual buffer being used.
+"""
+class AbstractBuffer():
+  def initialise(self): pass
+  def storeItem(self,data): pass
+  def retrieveItem(self): pass
+  def removeLastRetrievedItem(self): pass
+  def size(self): pass
+  
 """class OemGatewayBuffer
 
 Stores server parameters and buffers the data between two HTTP requests
@@ -28,8 +39,10 @@ class OemGatewayBuffer(object):
         self._log = logging.getLogger("OemGateway")
         
         # Initialize variables
-        self._data_buffer = []
         self._settings = {}
+        
+    def setBuffer (self, buffer):
+        self.buffer = buffer
         
     def set(self, **kwargs):
         """Update settings.
@@ -63,10 +76,8 @@ class OemGatewayBuffer(object):
                            self._settings['domain'] + self._settings['path'] + 
                            " -> buffer data: " + str(data) + 
                            ", timestamp: " + str(t))
-        
-        # Append data set [timestamp, [node, val1, val2, val3,...]] 
-        # to _data_buffer
-        self._data_buffer.append([t, data])
+               
+        self.buffer.storeItem([t, data])
 
     def _send_data(self, data, time):
         """Send data to server.
@@ -86,20 +97,15 @@ class OemGatewayBuffer(object):
         
         # Buffer management
         # If data buffer not empty, send a set of values
-        if self._data_buffer != []:
-            time, data = self._data_buffer[0]
+        if (self.buffer.size() > 0 ):
+            time, data = self.buffer.retrieveItem()
             self._log.debug("Server " + 
                            self._settings['domain'] + self._settings['path'] + 
                            " -> send data: " + str(data) + 
                            ", timestamp: " + str(time))
             if self._send_data(data, time):
                 # In case of success, delete sample set from buffer
-                del self._data_buffer[0]
-        # If buffer size reaches maximum, trash oldest values
-        # TODO: optionnal write to file instead of losing data
-        size = len(self._data_buffer)
-        if size > 1000:
-            self._data_buffer = self._data_buffer[size - 1000:]
+                self.buffer.removeLastRetrievedItem()
 
 """class OemGatewayEmoncmsBuffer
 
