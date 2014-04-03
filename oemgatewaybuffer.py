@@ -22,7 +22,7 @@ destination server.
 """
 class OemGatewayBuffer(object):
 
-    def __init__(self, bufferImplType):
+    def __init__(self, bufferImplType="InMemoryBuffer"):
         """Create a server data buffer initialized with server settings."""
         
         # Initialize logger

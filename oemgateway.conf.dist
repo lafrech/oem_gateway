@@ -57,10 +57,10 @@ loglevel = DEBUG
 [[emoncms_local]]
     type = OemGatewayEmoncmsBuffer
     [[[init_settings]]]
-        bufferImpl = InMemoryBuffer
+        bufferImplType = InMemoryBuffer
     [[[runtime_settings]]]
         domain = localhost
-        apikey = xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        apikey = 913f557706d069745bfe8dac70040261
         protocol = http://
         active = True
         path = /emoncms
@@ -68,10 +68,11 @@ loglevel = DEBUG
 [[emoncms_remote]]
     type = OemGatewayEmoncmsBuffer
     [[[init_settings]]]
+        bufferImplType = InMemoryBuffer
     [[[runtime_settings]]]
         domain = domain.tld
         apikey = xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
         protocol = http://
-        active = True
+        active = False
         path = /emoncms
 
