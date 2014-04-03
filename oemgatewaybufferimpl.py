@@ -16,23 +16,23 @@ It's basically identical to the previous (inline) buffer.
 class InMemoryBuffer(ogb.AbstractBuffer):
   maximumEntriesInBuffer = 1000
   
-  def initialise(self):
+  def __init__(self):
     self._data_buffer = []
     
   def isFull(self):
-    return len(self._data_buffer) >= maximumEntriesInBuffer
+    return self.size() >= InMemoryBuffer.maximumEntriesInBuffer
 
   def discardOldestItem(self):
-    self._data_buffer = self._data_buffer[size - maximumEntriesInBuffer:]
+    self._data_buffer = self._data_buffer[size - InMemoryBuffer.maximumEntriesInBuffer:]
       
   def discardOldestItemIfFull(self):
     if self.isFull():
       self.discardOldestItem()
         
   def storeItem(self,data):
-    discardOldestItemIfFull();
+    self.discardOldestItemIfFull();
             
-    self.buffer.append (data)
+    self._data_buffer.append (data)
     
   def retrieveItem(self):
     return self._data_buffer[0]

@@ -16,7 +16,6 @@ import logging
 Represents the actual buffer being used.
 """
 class AbstractBuffer():
-  def initialise(self): pass
   def storeItem(self,data): pass
   def retrieveItem(self): pass
   def removeLastRetrievedItem(self): pass
