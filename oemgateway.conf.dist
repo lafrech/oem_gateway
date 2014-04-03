@@ -57,6 +57,7 @@ loglevel = DEBUG
 [[emoncms_local]]
     type = OemGatewayEmoncmsBuffer
     [[[init_settings]]]
+        bufferImpl = InMemoryBuffer
     [[[runtime_settings]]]
         domain = localhost
         apikey = xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

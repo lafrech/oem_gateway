@@ -20,11 +20,6 @@ import oemgatewayinterface as ogi
 import oemgatewaybuffer as ogb
 import oemgatewaylistener as ogl
 
-# To begin with, we'll always just use the in-memory buffer,
-# but this will allow us to slip in another implementation (i.e. file-based or MySQL) 
-# without algorithmic changes.
-from oemgatewaybufferimpl import InMemoryBuffer
-
 """class OemGateway
 
 Monitors data inputs through OemGatewayListener instances, and sends data to
@@ -127,11 +122,11 @@ class OemGateway(object):
             if name not in self._buffers:
                 # This gets the class from the 'type' string
                 self._log.info("Creating buffer %s", name)
+
                 self._buffers[name] = \
                     getattr(ogb, buf['type'])(**buf['init_settings'])
             # Set runtime settings
             self._buffers[name].set(**buf['runtime_settings'])
-            self._buffers[name].setBuffer( InMemoryBuffer() )
         # If existing buffer is not in settings anymore, delete it
         for name in self._buffers:
             if name not in settings['buffers']:

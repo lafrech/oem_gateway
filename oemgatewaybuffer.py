@@ -10,16 +10,7 @@
 import urllib2, httplib
 import time
 import logging
-
-"""class AbstractBuffer
-
-Represents the actual buffer being used.
-"""
-class AbstractBuffer():
-  def storeItem(self,data): pass
-  def retrieveItem(self): pass
-  def removeLastRetrievedItem(self): pass
-  def size(self): pass
+import oemgatewaybufferimpl as ogbi
   
 """class OemGatewayBuffer
 
@@ -31,17 +22,17 @@ destination server.
 """
 class OemGatewayBuffer(object):
 
-    def __init__(self):
+    def __init__(self, bufferImplType):
         """Create a server data buffer initialized with server settings."""
         
         # Initialize logger
         self._log = logging.getLogger("OemGateway")
-        
+
         # Initialize variables
         self._settings = {}
         
-    def setBuffer (self, buffer):
-        self.buffer = buffer
+        # Create underlying buffer implementation
+        self.buffer = getattr(ogbi, bufferImplType)()
         
     def set(self, **kwargs):
         """Update settings.

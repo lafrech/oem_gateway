@@ -7,13 +7,21 @@
 
 """
 
-import oemgatewaybuffer as ogb
+"""class AbstractBuffer
+
+Represents the actual buffer being used.
+"""
+class AbstractBuffer():
+  def storeItem(self,data): pass
+  def retrieveItem(self): pass
+  def removeLastRetrievedItem(self): pass
+  def size(self): pass
 
 """
 This implementation of the AbstractBuffer just uses an in-memory datastructure.
 It's basically identical to the previous (inline) buffer.
 """
-class InMemoryBuffer(ogb.AbstractBuffer):
+class InMemoryBuffer(AbstractBuffer):
   maximumEntriesInBuffer = 1000
   
   def __init__(self):
