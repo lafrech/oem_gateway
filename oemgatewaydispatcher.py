@@ -10,9 +10,9 @@
 import urllib2, httplib
 import time
 import logging
-import oemgatewaybufferimpl as ogbi
+import oemgatewaydispatchbuffer as ogdb
   
-"""class OemGatewayBuffer
+"""class OemGatewayDispatcher
 
 Stores server parameters and buffers the data between two HTTP requests
 
@@ -20,12 +20,12 @@ This class is meant to be inherited by subclasses specific to their
 destination server.
 
 """
-class OemGatewayBuffer(object):
+class OemGatewayDispatcher(object):
     bufferMethodMap = { 
                        'memory':'InMemoryBuffer' 
                        } 
     
-    def __init__(self, bufferName, bufferMethod="memory", **kwargs):
+    def __init__(self, dispatcherName, bufferMethod="memory", **kwargs):
         """Create a server data buffer initialized with server settings."""
         
         # Initialize logger
@@ -35,9 +35,9 @@ class OemGatewayBuffer(object):
         self._settings = {}
         
         # Create underlying buffer implementation
-        self.buffer = getattr(ogbi, OemGatewayBuffer.bufferMethodMap[bufferMethod])(bufferName, **kwargs)
+        self.buffer = getattr(ogdb, OemGatewayDispatcher.bufferMethodMap[bufferMethod])(dispatcherName, **kwargs)
         
-        self._log.info ("Set up buffer '%s' (%s)" % (bufferName, bufferMethod))
+        self._log.info ("Set up dispatcher '%s' (buffer: %s)" % (dispatcherName, bufferMethod))
         
     def set(self, **kwargs):
         """Update settings.
@@ -47,7 +47,7 @@ class OemGatewayBuffer(object):
         domain (string): domain name (eg: 'domain.tld')
         path (string): emoncms path with leading slash (eg: '/emoncms')
         apikey (string): API key with write access
-        active (string): whether the data buffer is active (True/False)
+        active (string): whether the dispatcher is active (True/False)
         
         """
 
@@ -102,12 +102,12 @@ class OemGatewayBuffer(object):
                 # In case of success, delete sample set from buffer
                 self.buffer.discardLastRetrievedItem()
 
-"""class OemGatewayEmoncmsBuffer
+"""class OemGatewayEmoncmsDispatcher
 
 Stores server parameters and buffers the data between two HTTP requests
 
 """
-class OemGatewayEmoncmsBuffer(OemGatewayBuffer):
+class OemGatewayEmoncmsDispatcher(OemGatewayDispatcher):
 
     def _send_data(self, data, time):
         """Send data to server."""

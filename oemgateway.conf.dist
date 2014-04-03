@@ -1,7 +1,7 @@
 # OemGateway Configuration file example
 # Copy this as oemgateway.conf (or any custom name) and edit settings
 
-# Each listener and each buffer has 
+# Each listener and each dispatcher has 
 # - a [[name]]: a unique string
 # - a type: the name of the class it instantiates
 # - a set of init_settings (depends on the type)
@@ -43,22 +43,22 @@ loglevel = DEBUG
         port_nb = 50011
     [[[runtime_settings]]]
 
-###########
-# Buffers #
-###########
-[buffers]
+###############
+# Dispatchers #
+###############
+[dispatchers]
 
-# The two following buffers instantiate the same class, 
+# The two following dispatchers instantiate the same class, 
 # that formats the data for an emoncms instance.
 # One sends the data to a local instance, the other one
 # to a distant one.
-# If active is set to False, the buffer neither records nor sends any data,
-# but it holds unsent data until active becomes True.
+# If active is set to False, the dispatcher neither records nor sends any data,
+# but it buffers unsent data until active becomes True.
 [[emoncms_local]]
-    type = OemGatewayEmoncmsBuffer
+    type = OemGatewayEmoncmsDispatcher
     [[[init_settings]]]
         bufferMethod = memory
-        bufferSize = 2
+        bufferSize = 1000
     [[[runtime_settings]]]
         domain = localhost
         apikey = xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -67,7 +67,7 @@ loglevel = DEBUG
         path = /emoncms
 
 [[emoncms_remote]]
-    type = OemGatewayEmoncmsBuffer
+    type = OemGatewayEmoncmsDispatcher
     [[[init_settings]]]
         bufferMethod = memory
     [[[runtime_settings]]]
