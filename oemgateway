@@ -124,7 +124,7 @@ class OemGateway(object):
                 self._log.info("Creating buffer %s", name)
 
                 self._buffers[name] = \
-                    getattr(ogb, buf['type'])(**buf['init_settings'])
+                    getattr(ogb, buf['type'])(name, **buf['init_settings'])
             # Set runtime settings
             self._buffers[name].set(**buf['runtime_settings'])
         # If existing buffer is not in settings anymore, delete it

@@ -21,8 +21,11 @@ destination server.
 
 """
 class OemGatewayBuffer(object):
-
-    def __init__(self, bufferImplType="InMemoryBuffer"):
+    bufferMethodMap = { 
+                       'memory':'InMemoryBuffer' 
+                       } 
+    
+    def __init__(self, bufferName, bufferMethod="memory", **kwargs):
         """Create a server data buffer initialized with server settings."""
         
         # Initialize logger
@@ -32,7 +35,9 @@ class OemGatewayBuffer(object):
         self._settings = {}
         
         # Create underlying buffer implementation
-        self.buffer = getattr(ogbi, bufferImplType)()
+        self.buffer = getattr(ogbi, OemGatewayBuffer.bufferMethodMap[bufferMethod])(bufferName, **kwargs)
+        
+        self._log.info ("Set up buffer '%s' (%s)" % (bufferName, bufferMethod))
         
     def set(self, **kwargs):
         """Update settings.
@@ -87,7 +92,7 @@ class OemGatewayBuffer(object):
         
         # Buffer management
         # If data buffer not empty, send a set of values
-        if (self.buffer.size() > 0 ):
+        if (self.buffer.hasItems()):
             time, data = self.buffer.retrieveItem()
             self._log.debug("Server " + 
                            self._settings['domain'] + self._settings['path'] + 
@@ -95,7 +100,7 @@ class OemGatewayBuffer(object):
                            ", timestamp: " + str(time))
             if self._send_data(data, time):
                 # In case of success, delete sample set from buffer
-                self.buffer.removeLastRetrievedItem()
+                self.buffer.discardLastRetrievedItem()
 
 """class OemGatewayEmoncmsBuffer
 
