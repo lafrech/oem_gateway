@@ -196,7 +196,8 @@ until the network is up again.
 
 ##### Init settings
 
-None
+* bufferMethod (optional): memory is the only supported value at present
+* bufferSize (optional): the maximum number of transmissions to buffer - default 1000
 
 ##### Runtime settings
 
