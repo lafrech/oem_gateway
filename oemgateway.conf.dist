@@ -69,7 +69,13 @@ loglevel = DEBUG
 [[emoncms_remote]]
     type = OemGatewayEmoncmsDispatcher
     [[[init_settings]]]
-        bufferMethod = memory
+        bufferMethod = database
+        bufferSize = 1
+        dbUser = root
+        dbPassword = raspberry
+        dbHost = localhost
+        dbDatabase = buffer
+        hardDelete = False
     [[[runtime_settings]]]
         domain = domain.tld
         apikey = xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
