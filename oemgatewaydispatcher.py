@@ -21,10 +21,7 @@ destination server.
 
 """
 class OemGatewayDispatcher(object):
-    bufferMethodMap = { 
-                       'memory':'InMemoryBuffer' 
-                       } 
-    
+
     def __init__(self, dispatcherName, bufferMethod="memory", **kwargs):
         """Create a server data buffer initialized with server settings."""
         
@@ -35,7 +32,7 @@ class OemGatewayDispatcher(object):
         self._settings = {}
         
         # Create underlying buffer implementation
-        self.buffer = getattr(ogdb, OemGatewayDispatcher.bufferMethodMap[bufferMethod])(dispatcherName, **kwargs)
+        self.buffer = getattr(ogdb, ogdb.AbstractBuffer.bufferMethodMap[bufferMethod])(dispatcherName, **kwargs)
         
         self._log.info ("Set up dispatcher '%s' (buffer: %s)" % (dispatcherName, bufferMethod))
         
