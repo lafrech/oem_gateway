@@ -14,10 +14,14 @@ import logging
 Represents the actual buffer being used.
 """
 class AbstractBuffer():
-  def storeItem(self,data): pass
-  def retrieveItem(self): pass
-  def discardLastRetrievedItem(self): pass
-  def hasItems(self): pass
+  def storeItem(self,data): 
+    raise NotImplementedError
+  def retrieveItem(self): 
+    raise NotImplementedError
+  def discardLastRetrievedItem(self): 
+    raise NotImplementedError
+  def hasItems(self): 
+    raise NotImplementedError
 
 """
 This implementation of the AbstractBuffer just uses an in-memory datastructure.
