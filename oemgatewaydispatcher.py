@@ -32,9 +32,13 @@ class OemGatewayDispatcher(object):
         self._settings = {}
         
         # Create underlying buffer implementation
-        self.buffer = getattr(ogdb, ogdb.AbstractBuffer.bufferMethodMap[bufferMethod])(dispatcherName, **kwargs)
+        self.buffer = getattr(
+            ogdb, 
+            ogdb.AbstractBuffer.bufferMethodMap[bufferMethod])(dispatcherName,
+                                                               **kwargs)
         
-        self._log.info ("Set up dispatcher '%s' (buffer: %s)" % (dispatcherName, bufferMethod))
+        self._log.info ("Set up dispatcher '%s' (buffer: %s)"
+                        % (dispatcherName, bufferMethod))
         
     def set(self, **kwargs):
         """Update settings.

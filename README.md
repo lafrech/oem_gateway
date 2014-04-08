@@ -10,7 +10,7 @@ of existing listeners and dispatchers.
 
 Note: the original concept of a `buffer` has been
 rebranded as a `dispatcher` to make the system a little more
-intuitive
+intuitive.
 
 ## Installation
 
