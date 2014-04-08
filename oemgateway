@@ -17,13 +17,13 @@ import argparse
 import pprint
 
 import oemgatewayinterface as ogi
-import oemgatewaybuffer as ogb
+import oemgatewaydispatcher as ogd
 import oemgatewaylistener as ogl
 
 """class OemGateway
 
 Monitors data inputs through OemGatewayListener instances, and sends data to
-target servers through OemGatewayEmoncmsBuffer instances.
+target servers through OemGatewayEmoncmsDispatcher instances.
 
 Communicates with the user through an OemGatewayInterface
 
@@ -52,8 +52,8 @@ class OemGateway(object):
         self._log.info("OemGateway %s" % self.__version__)
         self._log.info("Opening gateway...")
         
-        # Initialize buffers and listeners
-        self._buffers = {}
+        # Initialize dispatchers and listeners
+        self._dispatchers = {}
         self._listeners = {}
         self._update_settings(settings)
         
@@ -84,12 +84,12 @@ class OemGateway(object):
                 values = l.read()
                 # If complete and valid data was received
                 if values is not None:
-                    # Buffer data in server buffers
-                    for b in self._buffers.itervalues():
+                    # Add data to dispatcher
+                    for b in self._dispatchers.itervalues():
                         b.add(values)
             
-            # For all buffers
-            for b in self._buffers.itervalues():
+            # For all dispatchers
+            for b in self._dispatchers.itervalues():
                 # Send one set of values to server
                 b.flush()
 
@@ -119,21 +119,22 @@ class OemGateway(object):
         # Logging level
         self._set_logging_level(settings['gateway']['loglevel'])
         
-        # Buffers
-        for name, buf in settings['buffers'].iteritems():
-            # If buffer does not exist, create it
-            if name not in self._buffers:
+        # Dispatchers
+        for name, buf in settings['dispatchers'].iteritems():
+            # If dispatcher does not exist, create it
+            if name not in self._dispatchers:
                 # This gets the class from the 'type' string
-                self._log.info("Creating buffer %s", name)
-                self._buffers[name] = \
-                    getattr(ogb, buf['type'])(**buf['init_settings'])
+                self._log.info("Creating dispatcher %s", name)
+
+                self._dispatchers[name] = \
+                    getattr(ogd, buf['type'])(name, **buf['init_settings'])
             # Set runtime settings
-            self._buffers[name].set(**buf['runtime_settings'])
-        # If existing buffer is not in settings anymore, delete it
-        for name in self._buffers:
-            if name not in settings['buffers']:
-                self._log.info("Deleting buffer %s", name)
-                del(self._buffers[name])
+            self._dispatchers[name].set(**buf['runtime_settings'])
+        # If existing dispatcher is not in settings anymore, delete it
+        for name in self._dispatchers:
+            if name not in settings['dispatchers']:
+                self._log.info("Deleting dispatcher %s", name)
+                del(self._dispatchers[name])
 
         # Listeners
         for name, lis in settings['listeners'].iteritems():

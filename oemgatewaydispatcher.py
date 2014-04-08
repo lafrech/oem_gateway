@@ -10,8 +10,9 @@
 import urllib2, httplib
 import time
 import logging
-
-"""class OemGatewayBuffer
+import oemgatewaydispatchbuffer as ogdb
+  
+"""class OemGatewayDispatcher
 
 Stores server parameters and buffers the data between two HTTP requests
 
@@ -19,17 +20,21 @@ This class is meant to be inherited by subclasses specific to their
 destination server.
 
 """
-class OemGatewayBuffer(object):
+class OemGatewayDispatcher(object):
 
-    def __init__(self):
+    def __init__(self, dispatcherName, bufferMethod="memory", **kwargs):
         """Create a server data buffer initialized with server settings."""
         
         # Initialize logger
         self._log = logging.getLogger("OemGateway")
-        
+
         # Initialize variables
-        self._data_buffer = []
         self._settings = {}
+        
+        # Create underlying buffer implementation
+        self.buffer = getattr(ogdb, ogdb.AbstractBuffer.bufferMethodMap[bufferMethod])(dispatcherName, **kwargs)
+        
+        self._log.info ("Set up dispatcher '%s' (buffer: %s)" % (dispatcherName, bufferMethod))
         
     def set(self, **kwargs):
         """Update settings.
@@ -39,7 +44,7 @@ class OemGatewayBuffer(object):
         domain (string): domain name (eg: 'domain.tld')
         path (string): emoncms path with leading slash (eg: '/emoncms')
         apikey (string): API key with write access
-        active (string): whether the data buffer is active (True/False)
+        active (string): whether the dispatcher is active (True/False)
         
         """
 
@@ -63,10 +68,8 @@ class OemGatewayBuffer(object):
                            self._settings['domain'] + self._settings['path'] + 
                            " -> buffer data: " + str(data) + 
                            ", timestamp: " + str(t))
-        
-        # Append data set [timestamp, [node, val1, val2, val3,...]] 
-        # to _data_buffer
-        self._data_buffer.append([t, data])
+               
+        self.buffer.storeItem([t, data])
 
     def _send_data(self, data, time):
         """Send data to server.
@@ -86,27 +89,22 @@ class OemGatewayBuffer(object):
         
         # Buffer management
         # If data buffer not empty, send a set of values
-        if self._data_buffer != []:
-            time, data = self._data_buffer[0]
+        if (self.buffer.hasItems()):
+            time, data = self.buffer.retrieveItem()
             self._log.debug("Server " + 
                            self._settings['domain'] + self._settings['path'] + 
                            " -> send data: " + str(data) + 
                            ", timestamp: " + str(time))
             if self._send_data(data, time):
                 # In case of success, delete sample set from buffer
-                del self._data_buffer[0]
-        # If buffer size reaches maximum, trash oldest values
-        # TODO: optionnal write to file instead of losing data
-        size = len(self._data_buffer)
-        if size > 1000:
-            self._data_buffer = self._data_buffer[size - 1000:]
+                self.buffer.discardLastRetrievedItem()
 
-"""class OemGatewayEmoncmsBuffer
+"""class OemGatewayEmoncmsDispatcher
 
 Stores server parameters and buffers the data between two HTTP requests
 
 """
-class OemGatewayEmoncmsBuffer(OemGatewayBuffer):
+class OemGatewayEmoncmsDispatcher(OemGatewayDispatcher):
 
     def _send_data(self, data, time):
         """Send data to server."""

@@ -23,17 +23,17 @@ dictionnary with the following keys:
 
         'gateway': a dictionary containing the gateway settings
         'listeners': a dictionary containing the listeners
-        'buffer': a dictionary containing the buffers
+        'dispatchers': a dictionary containing the dispatchers
 
         The gateway settings are:
         'loglevel': the logging level
         
-        Listeners and buffers are dictionaries with the folowing keys:
+        Listeners and dispatchers are dictionaries with the folowing keys:
         'type': class name
         'init_settings': dictionary with initialization settings
         'runtime_settings': dictionary with runtime settings
         Initialization and runtime settings depend on the listener and
-        buffer type.
+        dispatcher type.
 
 The run() method is supposed to be run regularly by the instanciater, to
 perform regular communication tasks.
@@ -193,24 +193,24 @@ class OemGatewayEmoncmsInterface(OemGatewayInterface):
                 emoncms_s[item]
 
         # Emoncms servers
-        settings['buffers'] = {'emoncms_local': {}, 'emoncms_remote': {}}
+        settings['dispatchers'] = {'emoncms_local': {}, 'emoncms_remote': {}}
         # Local
-        settings['buffers']['emoncms_local'] = \
-            {'type': 'OemGatewayEmoncmsBuffer',
+        settings['dispatchers']['emoncms_local'] = \
+            {'type': 'OemGatewayEmoncmsDispatcher',
             'init_settings': {},
             'runtime_settings': {}}
-        settings['buffers']['emoncms_local']['runtime_settings'] = \
+        settings['dispatchers']['emoncms_local']['runtime_settings'] = \
             {'protocol': self._local_protocol,
             'domain': self._local_domain,
             'path': self._local_path,
             'apikey': emoncms_s['apikey'],
             'active': 'True'}
         # Remote
-        settings['buffers']['emoncms_remote'] = \
-            {'type': 'OemGatewayEmoncmsBuffer',
+        settings['dispatchers']['emoncms_remote'] = \
+            {'type': 'OemGatewayEmoncmsDispatcher',
             'init_settings': {},
             'runtime_settings': {}}
-        settings['buffers']['emoncms_remote']['runtime_settings'] = \
+        settings['dispatchers']['emoncms_remote']['runtime_settings'] = \
             {'protocol': emoncms_s['remoteprotocol'],
             'domain': emoncms_s['remotedomain'],
             'path': emoncms_s['remotepath'],

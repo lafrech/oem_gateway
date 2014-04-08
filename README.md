@@ -4,8 +4,13 @@ OemGateway
 This software is part of OpenEnergyMonitor project.
 
 It runs as a gateway from one or more data sources (listeners)
-to one or more target databases (buffers). See below for the description
-of existing listeners and buffers.
+to one or more endpoints (via dispatchers). Dispatchers may
+buffer the transmissions in memory. See below for the description
+of existing listeners and dispatchers.
+
+Note: the original concept of a `buffer` has been
+rebranded as a `dispatcher` to make the system a little more
+intuitive
 
 ## Installation
 
@@ -85,7 +90,7 @@ Use --config-file argument to specify a file path.
 
 To create a config file, copy oemgateway.conf.dist and customize.
 
-See decription of the listeners and buffer below for help on the parameters.
+See decription of the listeners and dispatchers below for help on the parameters.
 
 If no flag is passed, default is to search for oemgateway.conf.
 
@@ -98,13 +103,15 @@ To log to a file, use the --logfile argument to specify a file path.
 
 The logging level is a config parameter.
 
-## Under the hood: listeners and buffers
+## Under the hood: listeners, buffers, and dispatchers
 
-Listerners and buffers are classes that are instanciated by the gateway.
+Listerners and dispatchers are classes that are instanciated by the gateway.
 
-Listeners manage data inputs and forward data to buffers. Buffers send data to processing/display applications.
+Listeners manage data inputs and forward data to dispatchers. Dispatchers send data to processing/display applications.
 
-The gateway links one or more listeners to one or more buffers.
+A dispatcher may use a buffering mechanism to make this process more resilient.
+
+The gateway links one or more listeners to one or more dispatchers.
 
 ### Listeners
 
@@ -181,22 +188,23 @@ Note that neither acknowledgement nor authentication is implemented.
 
 None
 
-### Buffers
+### Dispatchers
 
-Buffers derive the OemGatewayBuffer class.
+Dispatchers derive the OemGatewayDispatcher class.
 
-    OemGatewayBuffer
+    OemGatewayDispatcher
       |
-      |-- OemGatewayEmoncmsBuffer
+      |-- OemGatewayEmoncmsDispatcher
 
-#### OemGatewayEmoncmsBuffer
+#### OemGatewayEmoncmsDispatcher
 
 Send data to an emoncms server. If connection is lost, the data is buffered
 until the network is up again.
 
 ##### Init settings
 
-None
+* bufferMethod (optional): `memory` is the only supported value at present
+* bufferSize (optional): the maximum number of transmissions to buffer - default 1000
 
 ##### Runtime settings
 
