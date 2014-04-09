@@ -110,31 +110,33 @@ Stores server parameters and buffers the data between two HTTP requests
 """
 class OemGatewayEmoncmsDispatcher(OemGatewayDispatcher):
 
-    def _send_data(self, data, time):
+    def _send_data(self, data, timestamp):
         """Send data to server."""
         
         # Prepare data string with the values in data buffer
-        data_string = ''
-        # Timestamp
-        data_string += '&time=' + str(time)
-        # Node ID
-        data_string += '&node=' + str(data[0])
-        # Data
-        data_string += '&json={'
-        for i, val in enumerate(data[1:]):
-            data_string += str(i+1) + ':' + str(val)
-            data_string += ','
-        # Remove trailing comma and close braces
-        data_string = data_string[0:-1]+'}'
+        data_string = '['
+        # WIP: currently, only one set of values (one timsetamp) is sent
+        # so bulk mode is not really useful yet
+        for (timestamp, data) in [(timestamp, data)]:
+            data_string += '['
+            data_string += str(int(round(timestamp-time.time())))
+            for sample in data:
+                data_string += ','
+                data_string += str(sample)
+            data_string += '],'
+        # Remove trailing comma and close bracket
+        data_string = data_string[0:-1]+']'
+
         self._log.debug("Data string: " + data_string)
         
         # Prepare URL string of the form
-        # 'http://domain.tld/emoncms/input/post.json?apikey=12345
-        # &node=10&json={1:1806, 2:1664}'
+        # 'http://domain.tld/emoncms/input/bulk.json?apikey=
+        # 12345&data=[[-10,10,1806],[-5,10,1806],[0,10,1806]]
+        # &offset=0' (requires emoncms >= 8.0)
         url_string = self._settings['protocol'] + self._settings['domain'] + \
-                     self._settings['path'] + '/input/post.json?apikey=' + \
-                     self._settings['apikey'] + data_string
-        self._log.debug("URL string: " + url_string)
+                     self._settings['path'] + "/input/bulk.json?apikey=" + \
+                     self._settings['apikey'] + "&data=" + data_string + \
+                     "&offset=0"
 
         # Send data to server
         self._log.info("Sending to " + 
