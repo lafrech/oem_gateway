@@ -1,6 +1,14 @@
 OemGateway
 ==========
 
+# OemGateway is deprecated !!
+
+Please move to [emonHub](https://github.com/emonhub/emonhub).
+
+Issues and pull-request should be opened there.
+
+---
+
 This software is part of OpenEnergyMonitor project.
 
 It runs as a gateway from one or more data sources (listeners)
